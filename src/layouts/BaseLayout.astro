@@ -1,0 +1,110 @@
+---
+import '../styles/global.css';
+import { t } from '../i18n/dict';
+import type { Locale } from '../lib/types';
+
+interface NavPage {
+  title: string;
+  path: string;
+}
+
+interface Props {
+  locale: Locale;
+  title: string;
+  description?: string;
+  cover?: string;
+  homePath: string;
+  navPages: NavPage[];
+  // wersja w drugim języku (jeśli istnieje): do przełącznika i hreflang
+  translationPath?: string;
+  translationLocale?: Locale;
+}
+
+const {
+  locale,
+  title,
+  description,
+  cover,
+  homePath,
+  navPages,
+  translationPath,
+  translationLocale,
+} = Astro.props;
+
+const site = Astro.site ?? new URL('https://radekgrabarek.com');
+const canonical = new URL(Astro.url.pathname, site).href;
+const translationUrl = translationPath ? new URL(translationPath, site).href : undefined;
+
+// hreflang: bieżąca wersja + tłumaczenie (jeśli jest) + x-default → wersja EN
+const alternates: { hreflang: string; href: string }[] = [{ hreflang: locale, href: canonical }];
+if (translationUrl && translationLocale) {
+  alternates.push({ hreflang: translationLocale, href: translationUrl });
+}
+const enHref =
+  locale === 'en' ? canonical : translationLocale === 'en' ? translationUrl : undefined;
+if (enHref) alternates.push({ hreflang: 'x-default', href: enHref });
+
+const fullTitle = `${title} — ${t('siteName', locale)}`;
+---
+
+<!doctype html>
+<html lang={locale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    {description && <meta name="description" content={description} />}
+    <link rel="canonical" href={canonical} />
+    {alternates.map((a) => <link rel="alternate" hreflang={a.hreflang} href={a.href} />)}
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={fullTitle} />
+    {description && <meta property="og:description" content={description} />}
+    <meta property="og:url" content={canonical} />
+    {cover && <meta property="og:image" content={cover} />}
+    <meta name="twitter:card" content={cover ? 'summary_large_image' : 'summary'} />
+
+    <slot name="head" />
+  </head>
+  <body>
+    <header class="site-header">
+      <nav class="site-nav" aria-label={locale === 'pl' ? 'Główna nawigacja' : 'Main navigation'}>
+        <a class="brand" href={homePath}>{t('siteName', locale)}</a>
+        <ul class="nav-links">
+          {navPages.map((p) => (
+            <li><a href={p.path}>{p.title}</a></li>
+          ))}
+        </ul>
+        {translationPath && (
+          <a class="lang-switch" href={translationPath} rel="alternate" hreflang={translationLocale}>
+            {t('switchToOther', locale)}
+          </a>
+        )}
+      </nav>
+    </header>
+
+    <main class="site-main">
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <p>© {new Date().getFullYear()} {t('siteName', locale)}</p>
+    </footer>
+
+    <!-- Zapamiętaj świadomy wybór języka, żeby auto-redirect na "/" go nie nadpisywał. -->
+    <script is:inline>
+      document.addEventListener(
+        'click',
+        function (e) {
+          var a = e.target.closest && e.target.closest('.lang-switch');
+          if (a) {
+            try {
+              localStorage.setItem('langChosen', '1');
+            } catch (_) {}
+          }
+        },
+        true,
+      );
+    </script>
+  </body>
+</html>

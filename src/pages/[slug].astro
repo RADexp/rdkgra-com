@@ -1,0 +1,16 @@
+---
+// Angielskie artykuły i podstrony: /[slug]
+import EntryView from '../components/EntryView.astro';
+import { getEntries } from '../lib/notion';
+
+export async function getStaticPaths() {
+  const entries = await getEntries();
+  return entries
+    .filter((e) => e.locale === 'en' && (e.type === 'article' || e.type === 'page'))
+    .map((e) => ({ params: { slug: e.slug }, props: { entry: e } }));
+}
+
+const { entry } = Astro.props;
+---
+
+<EntryView entry={entry} locale="en" />

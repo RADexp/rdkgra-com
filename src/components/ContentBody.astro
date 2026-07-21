@@ -1,0 +1,62 @@
+---
+import type { ContentBlock } from '../lib/types';
+
+interface Props {
+  blocks: ContentBlock[];
+}
+const { blocks } = Astro.props;
+---
+
+<div class="content-body">
+  {
+    blocks.map((b) => {
+      if (b.type === 'h1') return <h1 set:html={b.html} />;
+      if (b.type === 'h2') return <h2 set:html={b.html} />;
+      if (b.type === 'h3') return <h3 set:html={b.html} />;
+      if (b.type === 'p') return <p set:html={b.html} />;
+      if (b.type === 'ul')
+        return (
+          <ul>
+            {(b.items ?? []).map((item) => (
+              <li set:html={item} />
+            ))}
+          </ul>
+        );
+      if (b.type === 'youtube' && b.youtubeId)
+        return (
+          <div class="video-embed">
+            <iframe
+              src={`https://www.youtube-nocookie.com/embed/${b.youtubeId}`}
+              title="YouTube video"
+              loading="lazy"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen
+            />
+          </div>
+        );
+      return null;
+    })
+  }
+</div>
+
+<style>
+  .content-body {
+    line-height: 1.7;
+  }
+  .content-body :global(a) {
+    color: var(--color-link);
+  }
+  .video-embed {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    margin: var(--space-4) 0;
+  }
+  .video-embed :global(iframe) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    border-radius: var(--radius);
+  }
+</style>

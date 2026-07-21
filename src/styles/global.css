@@ -1,0 +1,136 @@
+/*
+ * Szkielet stylów — placeholdery gotowe do podmiany, gdy przyjdzie design
+ * handoff (osobna wiadomość). Celowo minimalny, semantyczny, bez frameworków.
+ * Zmienne CSS na kolory / spacing / typografię trzymamy w jednym miejscu.
+ */
+
+:root {
+  /* kolory (placeholder) */
+  --color-bg: #ffffff;
+  --color-surface: #fafafa;
+  --color-text: #1a1a1a;
+  --color-muted: #666666;
+  --color-border: #e5e5e5;
+  --color-link: #1a5fb4;
+  --color-placeholder: #dcdcdc;
+
+  /* typografia */
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+  /* spacing */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 1rem;
+  --space-4: 1.5rem;
+  --space-6: 3rem;
+
+  --radius: 8px;
+  --content-width: 64rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #121212;
+    --color-surface: #1c1c1c;
+    --color-text: #ececec;
+    --color-muted: #a0a0a0;
+    --color-border: #2e2e2e;
+    --color-link: #8ab4f8;
+    --color-placeholder: #333333;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: var(--font-sans);
+  color: var(--color-text);
+  background: var(--color-bg);
+  line-height: 1.6;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+img {
+  max-width: 100%;
+}
+
+a {
+  color: var(--color-link);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-link);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ── layout chrome ─────────────────────────────────────────────────────── */
+.site-header {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.site-nav {
+  max-width: var(--content-width);
+  margin: 0 auto;
+  padding: var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.brand {
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--color-text);
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: var(--color-text);
+}
+
+.lang-switch {
+  margin-left: auto;
+  text-decoration: none;
+}
+
+.site-main {
+  flex: 1;
+  width: 100%;
+  max-width: var(--content-width);
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-3);
+}
+
+.site-footer {
+  border-top: 1px solid var(--color-border);
+  color: var(--color-muted);
+  text-align: center;
+  padding: var(--space-4) var(--space-3);
+  font-size: 0.9rem;
+}

@@ -1,0 +1,89 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Cover from './Cover.astro';
+import ContentBody from './ContentBody.astro';
+import { getEntries, pagesFor, urlFor } from '../lib/notion';
+import { t } from '../i18n/dict';
+import type { Entry, Locale } from '../lib/types';
+
+interface Props {
+  entry: Entry;
+  locale: Locale;
+}
+const { entry, locale } = Astro.props;
+
+const entries = await getEntries();
+const navPages = pagesFor(entries, locale).map((p) => ({ title: p.title, path: urlFor(p) }));
+const homePath = locale === 'pl' ? '/pl/' : '/';
+
+const translationPath = entry.translation ? urlFor(entry.translation) : undefined;
+const translationLocale = entry.translation?.locale;
+
+const description =
+  entry.excerpt ??
+  entry.content.find((b) => b.type === 'p' && b.html)?.html?.replace(/<[^>]+>/g, '').slice(0, 200);
+
+const dateLabel =
+  entry.type === 'article' && entry.publishedAt
+    ? new Date(entry.publishedAt).toLocaleDateString(locale === 'pl' ? 'pl-PL' : 'en-GB', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+    : undefined;
+---
+
+<BaseLayout
+  locale={locale}
+  title={entry.title}
+  description={description}
+  cover={entry.cover}
+  homePath={homePath}
+  navPages={navPages}
+  translationPath={translationPath}
+  translationLocale={translationLocale}
+>
+  <article class="entry">
+    {
+      entry.cover && (
+        <div class="entry-cover">
+          <Cover src={entry.cover} alt={entry.title} />
+        </div>
+      )
+    }
+    <header class="entry-header">
+      <h1>{entry.title}</h1>
+      {
+        dateLabel && (
+          <time datetime={entry.publishedAt}>
+            {t('publishedOn', locale)}: {dateLabel}
+          </time>
+        )
+      }
+    </header>
+    <ContentBody blocks={entry.content} />
+    <p class="entry-back"><a href={homePath}>{t('backToHome', locale)}</a></p>
+  </article>
+</BaseLayout>
+
+<style>
+  .entry {
+    max-width: 42rem;
+    margin: 0 auto;
+  }
+  .entry-cover {
+    aspect-ratio: 16 / 9;
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: var(--space-4);
+  }
+  .entry-header time {
+    display: block;
+    color: var(--color-muted);
+    font-size: 0.9rem;
+    margin-top: var(--space-1);
+  }
+  .entry-back {
+    margin-top: var(--space-6);
+  }
+</style>

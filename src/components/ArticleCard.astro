@@ -1,0 +1,66 @@
+---
+import Cover from './Cover.astro';
+import type { Entry, Locale } from '../lib/types';
+import { urlFor } from '../lib/notion';
+
+interface Props {
+  entry: Entry;
+  locale: Locale;
+}
+const { entry } = Astro.props;
+const href = urlFor(entry);
+const dateLabel = entry.publishedAt
+  ? new Date(entry.publishedAt).toLocaleDateString(entry.locale === 'pl' ? 'pl-PL' : 'en-GB', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+  : undefined;
+---
+
+<article class="card">
+  <a class="card-link" href={href}>
+    <div class="card-cover">
+      <Cover src={entry.cover} alt={entry.title} />
+    </div>
+    <div class="card-body">
+      <h2 class="card-title">{entry.title}</h2>
+      {dateLabel && <time class="card-date" datetime={entry.publishedAt}>{dateLabel}</time>}
+      {entry.excerpt && <p class="card-excerpt">{entry.excerpt}</p>}
+    </div>
+  </a>
+</article>
+
+<style>
+  .card {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--color-surface);
+  }
+  .card-link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+  }
+  .card-cover {
+    aspect-ratio: 16 / 9;
+  }
+  .card-body {
+    padding: var(--space-3);
+  }
+  .card-title {
+    margin: 0 0 var(--space-1);
+    font-size: 1.25rem;
+  }
+  .card-date {
+    display: block;
+    color: var(--color-muted);
+    font-size: 0.85rem;
+    margin-bottom: var(--space-2);
+  }
+  .card-excerpt {
+    margin: 0;
+    color: var(--color-text);
+  }
+</style>

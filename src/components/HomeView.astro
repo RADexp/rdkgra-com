@@ -1,0 +1,96 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ArticleCard from './ArticleCard.astro';
+import Cover from './Cover.astro';
+import ContentBody from './ContentBody.astro';
+import { getEntries, articlesFor, pagesFor, homeFor, urlFor } from '../lib/notion';
+import { t } from '../i18n/dict';
+import type { ContentBlock, Locale } from '../lib/types';
+
+interface Props {
+  locale: Locale;
+  autoDetect?: boolean;
+}
+const { locale, autoDetect = false } = Astro.props;
+
+const entries = await getEntries();
+const home = homeFor(entries, locale);
+const articles = articlesFor(entries, locale);
+const navPages = pagesFor(entries, locale).map((p) => ({ title: p.title, path: urlFor(p) }));
+const homePath = locale === 'pl' ? '/pl/' : '/';
+
+const translationPath = home?.translation ? urlFor(home.translation) : undefined;
+const translationLocale = home?.translation?.locale;
+
+const heroTitle = home?.title ?? t('siteName', locale);
+const heroBlocks: ContentBlock[] = home?.content ?? [];
+const firstParagraph = heroBlocks.find((b) => b.type === 'p' && b.html)?.html;
+const description = firstParagraph ? firstParagraph.replace(/<[^>]+>/g, '').slice(0, 200) : undefined;
+---
+
+<BaseLayout
+  locale={locale}
+  title={heroTitle}
+  description={description}
+  cover={home?.cover}
+  homePath={homePath}
+  navPages={navPages}
+  translationPath={translationPath}
+  translationLocale={translationLocale}
+>
+  {
+    autoDetect && (
+      <script slot="head" is:inline>
+        {`(function(){try{if(location.pathname!=='/')return;if(localStorage.getItem('langChosen'))return;var l=(navigator.language||'').toLowerCase();if(l.indexOf('pl')===0)location.replace('/pl/');}catch(e){}})();`}
+      </script>
+    )
+  }
+
+  <section class="hero">
+    <div class="hero-cover">
+      <Cover src={home?.cover} alt={heroTitle} />
+    </div>
+    <div class="hero-text">
+      <h1>{heroTitle}</h1>
+      <ContentBody blocks={heroBlocks} />
+    </div>
+  </section>
+
+  <section class="posts" aria-labelledby="posts-heading">
+    <h2 id="posts-heading">{t('latestPosts', locale)}</h2>
+    {
+      articles.length ? (
+        <div class="posts-grid">
+          {articles.map((a) => (
+            <ArticleCard entry={a} locale={locale} />
+          ))}
+        </div>
+      ) : (
+        <p class="empty">{t('noPosts', locale)}</p>
+      )
+    }
+  </section>
+</BaseLayout>
+
+<style>
+  .hero {
+    margin-bottom: var(--space-6);
+  }
+  .hero-cover {
+    aspect-ratio: 21 / 9;
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: var(--space-4);
+  }
+  .hero-text h1 {
+    margin-top: 0;
+  }
+  .posts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--space-4);
+  }
+  .empty {
+    color: var(--color-muted);
+  }
+</style>

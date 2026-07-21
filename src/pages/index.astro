@@ -1,0 +1,7 @@
+---
+// Angielska strona główna (domyślny język, bez prefiksu). Zawiera skrypt
+// auto-wykrywania: przeglądarka po polsku → przekierowanie na /pl/.
+import HomeView from '../components/HomeView.astro';
+---
+
+<HomeView locale="en" autoDetect={true} />

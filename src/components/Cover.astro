@@ -1,0 +1,38 @@
+---
+// Okładka/hero: zewnętrzny URL wprost w <img>. Brak URL → kolor zastępczy.
+// Bez astro:assets (obce domeny kruche przy buildzie).
+interface Props {
+  src?: string;
+  alt: string;
+  class?: string;
+}
+const { src, alt, class: className } = Astro.props;
+---
+
+{
+  src ? (
+    <img
+      class:list={['cover', className]}
+      src={src}
+      alt={alt}
+      loading="lazy"
+      decoding="async"
+      referrerpolicy="no-referrer"
+    />
+  ) : (
+    <div class:list={['cover', 'cover--placeholder', className]} role="img" aria-label={alt} />
+  )
+}
+
+<style>
+  .cover {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: var(--color-placeholder);
+  }
+  .cover--placeholder {
+    aspect-ratio: 16 / 9;
+  }
+</style>
