@@ -64,22 +64,31 @@ const fullTitle = `${title} — ${t('siteName', locale)}`;
     {cover && <meta property="og:image" content={cover} />}
     <meta name="twitter:card" content={cover ? 'summary_large_image' : 'summary'} />
 
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap"
+      rel="stylesheet"
+    />
+
     <slot name="head" />
   </head>
   <body>
     <header class="site-header">
       <nav class="site-nav" aria-label={locale === 'pl' ? 'Główna nawigacja' : 'Main navigation'}>
-        <a class="brand" href={homePath}>{t('siteName', locale)}</a>
         <ul class="nav-links">
           {navPages.map((p) => (
             <li><a href={p.path}>{p.title}</a></li>
           ))}
         </ul>
-        {translationPath && (
-          <a class="lang-switch" href={translationPath} rel="alternate" hreflang={translationLocale}>
-            {t('switchToOther', locale)}
-          </a>
-        )}
+        <div class="nav-right">
+          <a class="brand" href={homePath}>radekgrabarek<span class="tld">.com</span></a>
+          {translationPath && (
+            <a class="lang-switch" href={translationPath} rel="alternate" hreflang={translationLocale}>
+              {t('switchToOther', locale)}
+            </a>
+          )}
+        </div>
       </nav>
     </header>
 
@@ -88,7 +97,10 @@ const fullTitle = `${title} — ${t('siteName', locale)}`;
     </main>
 
     <footer class="site-footer">
-      <p>© {new Date().getFullYear()} {t('siteName', locale)}</p>
+      <div class="footer-inner">
+        <p>© {new Date().getFullYear()} {t('siteName', locale)}</p>
+        <p>radekgrabarek<span class="tld" style="color:var(--color-accent)">.com</span></p>
+      </div>
     </footer>
 
     <!-- Zapamiętaj świadomy wybór języka, żeby auto-redirect na "/" go nie nadpisywał. -->

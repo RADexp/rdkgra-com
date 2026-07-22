@@ -1,8 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ArticleCard from './ArticleCard.astro';
-import Cover from './Cover.astro';
-import ContentBody from './ContentBody.astro';
 import { getEntries, articlesFor, pagesFor, homeFor, urlFor } from '../lib/notion';
 import { t } from '../i18n/dict';
 import type { ContentBlock, Locale } from '../lib/types';
@@ -22,10 +20,30 @@ const homePath = locale === 'pl' ? '/pl/' : '/';
 const translationPath = home?.translation ? urlFor(home.translation) : undefined;
 const translationLocale = home?.translation?.locale;
 
-const heroTitle = home?.title ?? t('siteName', locale);
+// Treść hero pochodzi z TREŚCI notatki HP w Notion, nie z pola „tytuł"
+// (tytuł to teraz tylko wewnętrzna nazwa wpisu). Pierwszy nagłówek w treści =
+// wielki tytuł hero; kursywa (<em>) w nim dostaje animowany gradient. Pozostałe
+// bloki (akapit „Notes from…") = lead pod tytułem, nad zapisem na newsletter.
 const heroBlocks: ContentBlock[] = home?.content ?? [];
-const firstParagraph = heroBlocks.find((b) => b.type === 'p' && b.html)?.html;
-const description = firstParagraph ? firstParagraph.replace(/<[^>]+>/g, '').slice(0, 200) : undefined;
+const headingIdx = heroBlocks.findIndex(
+  (b) => b.type === 'h1' || b.type === 'h2' || b.type === 'h3',
+);
+const headingHtml = headingIdx >= 0 ? heroBlocks[headingIdx].html : undefined;
+const leadBlocks = heroBlocks.filter((_, i) => i !== headingIdx);
+
+// Wersja czysto-tekstowa (bez tagów HTML) do <title>, OG i opisu SEO.
+const unescape = (s: string): string =>
+  s
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .trim();
+
+const heroTitle = headingHtml ? unescape(headingHtml) : (home?.title ?? t('siteName', locale));
+const firstParagraph = leadBlocks.find((b) => b.type === 'p' && b.html)?.html;
+const description = firstParagraph ? unescape(firstParagraph).slice(0, 200) : undefined;
 ---
 
 <BaseLayout
@@ -47,17 +65,57 @@ const description = firstParagraph ? firstParagraph.replace(/<[^>]+>/g, '').slic
   }
 
   <section class="hero">
-    <div class="hero-cover">
-      <Cover src={home?.cover} alt={heroTitle} />
-    </div>
-    <div class="hero-text">
-      <h1>{heroTitle}</h1>
-      <ContentBody blocks={heroBlocks} />
+    <div class="hero-orb" aria-hidden="true"></div>
+    <div class="hero-inner">
+      <p class="eyebrow">{t('heroTagline', locale)}</p>
+      {
+        headingHtml ? (
+          <h1 class="hero-title" set:html={headingHtml} />
+        ) : (
+          <h1 class="hero-title">{heroTitle}</h1>
+        )
+      }
+      <div class="hero-lead">
+        {leadBlocks.map((b) => (b.type === 'p' && b.html ? <p set:html={b.html} /> : null))}
+      </div>
+
+      <form
+        class="subscribe"
+        data-subscribe
+        method="post"
+        action="/api/subscribe"
+        data-msg-loading={t('subscribeLoading', locale)}
+        data-msg-ok={t('subscribeOk', locale)}
+        data-msg-already={t('subscribeAlready', locale)}
+        data-msg-invalid={t('subscribeInvalid', locale)}
+        data-msg-error={t('subscribeError', locale)}
+      >
+        <input
+          type="email"
+          name="email"
+          required
+          autocomplete="email"
+          placeholder={t('subscribePlaceholder', locale)}
+          aria-label={t('subscribePlaceholder', locale)}
+        />
+        <input type="hidden" name="locale" value={locale} />
+        {/* Pułapka na boty — ukryta przed ludźmi; nie wypełniać. */}
+        <input
+          class="hp-field"
+          type="text"
+          name="company"
+          tabindex="-1"
+          autocomplete="off"
+          aria-hidden="true"
+        />
+        <button type="submit">{t('subscribeCta', locale)}</button>
+      </form>
+      <p class="subscribe-note" data-subscribe-note aria-live="polite">{t('subscribeNote', locale)}</p>
     </div>
   </section>
 
   <section class="posts" aria-labelledby="posts-heading">
-    <h2 id="posts-heading">{t('latestPosts', locale)}</h2>
+    <h2 id="posts-heading" class="posts-heading">{t('latestPosts', locale)}</h2>
     {
       articles.length ? (
         <div class="posts-grid">
@@ -70,27 +128,206 @@ const description = firstParagraph ? firstParagraph.replace(/<[^>]+>/g, '').slic
       )
     }
   </section>
+
+  {/* Zapis na newsletter → wysyłka do /api/subscribe (zapis w Notion). */}
+  <script is:inline>
+    (function () {
+      var form = document.querySelector('[data-subscribe]');
+      var note = document.querySelector('[data-subscribe-note]');
+      if (!form) return;
+      var msg = function (k) {
+        return form.getAttribute('data-msg-' + k);
+      };
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var btn = form.querySelector('button');
+        var email = form.email.value.trim();
+        if (note) note.textContent = msg('loading');
+        if (btn) btn.disabled = true;
+        fetch(form.action, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            email: email,
+            locale: form.locale ? form.locale.value : '',
+            company: form.company ? form.company.value : '',
+          }),
+        })
+          .then(function (r) {
+            return r.json().then(function (d) {
+              return { status: r.status, data: d };
+            });
+          })
+          .then(function (res) {
+            if (res.data && res.data.ok) {
+              form.reset();
+              if (note) note.textContent = res.data.already ? msg('already') : msg('ok');
+            } else if (res.status === 422) {
+              if (note) note.textContent = msg('invalid');
+            } else {
+              if (note) note.textContent = msg('error');
+            }
+          })
+          .catch(function () {
+            if (note) note.textContent = msg('error');
+          })
+          .finally(function () {
+            if (btn) btn.disabled = false;
+          });
+      });
+    })();
+  </script>
 </BaseLayout>
 
 <style>
   .hero {
-    margin-bottom: var(--space-6);
-  }
-  .hero-cover {
-    aspect-ratio: 21 / 9;
-    border-radius: var(--radius);
+    position: relative;
     overflow: hidden;
-    margin-bottom: var(--space-4);
+    padding: clamp(36px, 6vw, 60px) 0 clamp(40px, 6vw, 58px);
   }
-  .hero-text h1 {
-    margin-top: 0;
+  .hero-orb {
+    position: absolute;
+    right: -70px;
+    top: -50px;
+    width: clamp(190px, 32vw, 340px);
+    height: clamp(190px, 32vw, 340px);
+    border-radius: 50%;
+    background: conic-gradient(
+      from 0deg,
+      var(--g-gold),
+      var(--g-orange),
+      var(--g-magenta),
+      var(--g-purple),
+      var(--g-gold)
+    );
+    filter: blur(4px);
+    opacity: 0.9;
+    animation: spinSlow 34s linear infinite;
+    -webkit-mask-image: radial-gradient(circle, #000 42%, transparent 62%);
+    mask-image: radial-gradient(circle, #000 42%, transparent 62%);
+    pointer-events: none;
+  }
+  .hero-inner {
+    position: relative;
+    max-width: 720px;
+  }
+  .eyebrow {
+    margin: 0 0 20px;
+    font: italic 400 13px var(--font-serif);
+    color: var(--color-accent);
+  }
+  .hero-title {
+    margin: 0;
+    font: 500 clamp(34px, 6vw, 62px) / 1.06 var(--font-serif);
+    letter-spacing: -0.015em;
+    color: var(--color-text);
+  }
+  /* Kursywa w tytule (Notion <em>) = animowany, kolorowy gradient. */
+  .hero-title :global(em) {
+    font-style: italic;
+    background: linear-gradient(
+      90deg,
+      var(--g-orange),
+      var(--g-magenta),
+      var(--g-purple),
+      var(--g-orange)
+    );
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: gradShift 8s ease infinite;
+  }
+  .hero-lead :global(p) {
+    margin: 28px 0 0;
+    max-width: 540px;
+    font: 400 clamp(16px, 2.4vw, 18px) / 1.7 var(--font-serif);
+    color: var(--color-muted);
+  }
+
+  .subscribe {
+    margin-top: 34px;
+    max-width: 440px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-end;
+  }
+  .subscribe input {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: none;
+    border-bottom: 1.5px solid var(--color-text);
+    outline: none;
+    font: 400 16px var(--font-serif);
+    color: var(--color-text);
+    padding-bottom: 9px;
+  }
+  .subscribe input::placeholder {
+    color: var(--color-subtle);
+  }
+  .subscribe button {
+    font: 600 15px var(--font-serif);
+    padding: 12px 26px;
+    border: none;
+    border-radius: 999px;
+    background: var(--grad-brand);
+    color: #fffdf8;
+    cursor: pointer;
+    white-space: nowrap;
+    box-shadow: 0 8px 20px -8px rgba(124, 79, 212, 0.6);
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+  .subscribe button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 24px -8px rgba(124, 79, 212, 0.7);
+  }
+  .subscribe button:disabled {
+    opacity: 0.6;
+    cursor: default;
+    transform: none;
+  }
+  /* Pułapka na boty — poza ekranem, niewidoczna, pomijana przez czytniki. */
+  .hp-field {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .subscribe-note {
+    margin: 12px 0 0;
+    font: 400 12px var(--font-mono);
+    color: var(--color-subtle);
+  }
+
+  .posts {
+    padding-bottom: var(--space-6);
+  }
+  .posts-heading {
+    margin: 0 0 22px;
+    font: italic 400 15px var(--font-serif);
+    color: var(--color-muted);
   }
   .posts-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: var(--space-4);
+    grid-template-columns: 1fr 1fr;
+    gap: 26px;
+  }
+  @media (max-width: 640px) {
+    .posts-grid {
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+    .subscribe {
+      gap: 10px;
+    }
   }
   .empty {
     color: var(--color-muted);
+    font-style: italic;
   }
 </style>

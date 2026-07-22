@@ -68,22 +68,41 @@ const dateLabel =
 
 <style>
   .entry {
-    max-width: 42rem;
+    max-width: var(--content-width);
     margin: 0 auto;
+    padding-top: clamp(24px, 5vw, 48px);
   }
   .entry-cover {
     aspect-ratio: 16 / 9;
     border-radius: var(--radius);
     overflow: hidden;
-    margin-bottom: var(--space-4);
+    margin-bottom: var(--space-5);
+  }
+  .entry-header {
+    margin-bottom: var(--space-5);
+  }
+  .entry-header h1 {
+    margin: 0;
+    font: 500 clamp(30px, 5vw, 48px) / 1.08 var(--font-serif);
+    letter-spacing: -0.015em;
+    color: var(--color-text);
   }
   .entry-header time {
     display: block;
-    color: var(--color-muted);
-    font-size: 0.9rem;
-    margin-top: var(--space-1);
+    font: 400 12px var(--font-mono);
+    color: var(--color-accent);
+    margin-top: var(--space-3);
   }
   .entry-back {
     margin-top: var(--space-6);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+  }
+  .entry-back a {
+    text-decoration: none;
+    color: var(--color-faint);
+  }
+  .entry-back a:hover {
+    color: var(--color-accent);
   }
 </style>

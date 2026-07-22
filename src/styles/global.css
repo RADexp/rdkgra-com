@@ -1,43 +1,46 @@
 /*
- * Szkielet stylów — placeholdery gotowe do podmiany, gdy przyjdzie design
- * handoff (osobna wiadomość). Celowo minimalny, semantyczny, bez frameworków.
- * Zmienne CSS na kolory / spacing / typografię trzymamy w jednym miejscu.
+ * radekgrabarek.com — system stylów "field notebook" (design handoff „1C").
+ * Ciepła paleta kremowa, serif Newsreader do treści, JetBrains Mono do metadanych.
+ * Wszystkie tokeny (kolory / typografia / spacing) trzymamy w jednym miejscu.
  */
 
 :root {
-  /* kolory (placeholder) */
-  --color-bg: #ffffff;
-  --color-surface: #fafafa;
-  --color-text: #1a1a1a;
-  --color-muted: #666666;
-  --color-border: #e5e5e5;
-  --color-link: #1a5fb4;
-  --color-placeholder: #dcdcdc;
+  /* ── kolory ─────────────────────────────────────────────────────────── */
+  --color-bg: #f6f2ea; /* tło strony (powierzchnia treści) */
+  --color-bg-edge: #e9e7e1; /* głębszy odcień krawędzi/stopki */
+  --color-surface: #fffdf8; /* karty */
+  --color-text: #1d1a15;
+  --color-muted: #57503f; /* lead / treść drugorzędna */
+  --color-muted-2: #77705f; /* opisy na kartach */
+  --color-faint: #9b917f; /* nieaktywna nawigacja */
+  --color-subtle: #a89e8c; /* najdrobniejsze metadane */
+  --color-border: #e6ddcc;
+  --color-accent: #b4531f; /* pomarańcz — linki / akcenty */
 
-  /* typografia */
-  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  /* stopy gradientu (akcenty marki) */
+  --g-gold: #f5a623;
+  --g-orange: #e0592f;
+  --g-magenta: #c23b7a;
+  --g-purple: #7c4fd4;
+  --grad-brand: linear-gradient(135deg, var(--g-gold), var(--g-magenta) 60%, var(--g-purple));
 
-  /* spacing */
+  /* ── typografia ─────────────────────────────────────────────────────── */
+  --font-serif: 'Newsreader', Georgia, 'Times New Roman', serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+
+  /* ── spacing / metryka ──────────────────────────────────────────────── */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 1rem;
   --space-4: 1.5rem;
+  --space-5: 2rem;
   --space-6: 3rem;
 
-  --radius: 8px;
-  --content-width: 64rem;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg: #121212;
-    --color-surface: #1c1c1c;
-    --color-text: #ececec;
-    --color-muted: #a0a0a0;
-    --color-border: #2e2e2e;
-    --color-link: #8ab4f8;
-    --color-placeholder: #333333;
-  }
+  --radius: 14px;
+  --radius-sm: 8px;
+  --page-max: 1080px;
+  --page-pad: clamp(20px, 5vw, 48px);
+  --content-width: 42rem; /* szerokość kolumny tekstu artykułu */
 }
 
 *,
@@ -47,10 +50,12 @@
 }
 
 html {
-  font-family: var(--font-sans);
+  font-family: var(--font-serif);
   color: var(--color-text);
   background: var(--color-bg);
   line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 body {
@@ -65,12 +70,30 @@ img {
 }
 
 a {
-  color: var(--color-link);
+  color: var(--color-accent);
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-link);
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
+}
+
+@keyframes gradShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes spinSlow {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -80,57 +103,98 @@ a {
   }
 }
 
-/* ── layout chrome ─────────────────────────────────────────────────────── */
+/* ── nagłówek / nawigacja ──────────────────────────────────────────────── */
 .site-header {
-  border-bottom: 1px solid var(--color-border);
+  width: 100%;
 }
 
 .site-nav {
-  max-width: var(--content-width);
+  max-width: var(--page-max);
   margin: 0 auto;
-  padding: var(--space-3);
+  padding: 22px var(--page-pad);
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--space-4);
   flex-wrap: wrap;
-}
-
-.brand {
-  font-weight: 700;
-  text-decoration: none;
-  color: var(--color-text);
 }
 
 .nav-links {
   list-style: none;
   display: flex;
-  gap: var(--space-3);
+  gap: 30px;
   margin: 0;
   padding: 0;
+  font: 400 14px/1 var(--font-serif);
 }
 
 .nav-links a {
   text-decoration: none;
+  color: var(--color-faint);
+  transition: color 0.15s ease;
+}
+
+.nav-links a:hover {
   color: var(--color-text);
 }
 
-.lang-switch {
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 18px;
   margin-left: auto;
+}
+
+.brand {
+  font: 500 12.5px var(--font-mono);
+  letter-spacing: -0.01em;
+  color: var(--color-text);
   text-decoration: none;
 }
 
+.brand .tld {
+  color: var(--color-accent);
+}
+
+.lang-switch {
+  font: 400 12px var(--font-mono);
+  color: var(--color-faint);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.lang-switch:hover {
+  color: var(--color-accent);
+}
+
+/* ── główna kolumna ────────────────────────────────────────────────────── */
 .site-main {
   flex: 1;
   width: 100%;
-  max-width: var(--content-width);
+  max-width: var(--page-max);
   margin: 0 auto;
-  padding: var(--space-4) var(--space-3);
+  padding: 0 var(--page-pad);
 }
 
+/* ── stopka ────────────────────────────────────────────────────────────── */
 .site-footer {
+  margin-top: var(--space-6);
   border-top: 1px solid var(--color-border);
-  color: var(--color-muted);
-  text-align: center;
-  padding: var(--space-4) var(--space-3);
-  font-size: 0.9rem;
+  color: var(--color-subtle);
+  padding: var(--space-5) var(--page-pad);
+}
+
+.site-footer .footer-inner {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  font: 400 12px var(--font-mono);
+}
+
+.site-footer p {
+  margin: 0;
 }
