@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Cover from './Cover.astro';
 import ContentBody from './ContentBody.astro';
+import Newsletter from './Newsletter.astro';
 import { getEntries, pagesFor, urlFor } from '../lib/notion';
 import { t } from '../i18n/dict';
 import type { Entry, Locale } from '../lib/types';
@@ -23,14 +24,42 @@ const description =
   entry.excerpt ??
   entry.content.find((b) => b.type === 'p' && b.html)?.html?.replace(/<[^>]+>/g, '').slice(0, 200);
 
+const isArticle = entry.type === 'article';
+
+// Data w stylu „JUL 09, 2026" / „09 LIP 2026" (wersaliki, zależne od języka).
 const dateLabel =
-  entry.type === 'article' && entry.publishedAt
-    ? new Date(entry.publishedAt).toLocaleDateString(locale === 'pl' ? 'pl-PL' : 'en-GB', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      })
+  isArticle && entry.publishedAt
+    ? new Date(entry.publishedAt)
+        .toLocaleDateString(locale === 'pl' ? 'pl-PL' : 'en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: '2-digit',
+        })
+        .toUpperCase()
     : undefined;
+
+// Szacowany czas czytania (~200 słów/min) z treści wpisu.
+const words = entry.content
+  .map((b) => {
+    if (b.type === 'code') return b.code ?? '';
+    if (b.items) return b.items.join(' ');
+    return b.html ?? '';
+  })
+  .join(' ')
+  .replace(/<[^>]+>/g, ' ')
+  .trim();
+const wordCount = words ? words.split(/\s+/).length : 0;
+const readMin = Math.max(1, Math.round(wordCount / 200));
+const readLabel = isArticle ? `${readMin} ${t('minRead', locale)}` : undefined;
+
+const category = entry.categories[0];
+const meta = [dateLabel, category?.toUpperCase(), readLabel].filter(Boolean).join(' · ');
+
+// Kanoniczny URL wpisu — do przycisków udostępniania.
+const site = Astro.site ?? new URL('https://radekgrabarek.com');
+const shareUrl = new URL(Astro.url.pathname, site).href;
+const xShare = `https://twitter.com/intent/tweet?text=${encodeURIComponent(entry.title)}&url=${encodeURIComponent(shareUrl)}`;
+const liShare = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
 ---
 
 <BaseLayout
@@ -44,6 +73,31 @@ const dateLabel =
   translationLocale={translationLocale}
 >
   <article class="entry">
+    <a class="entry-back" href={homePath}>{t('backToWriting', locale)}</a>
+
+    <header class="entry-header">
+      {meta && <div class="entry-meta">{meta}</div>}
+      <h1 class="entry-title">{entry.title}</h1>
+
+      {
+        entry.tags.length > 0 && (
+          <div class="entry-tags">
+            {entry.tags.map((tag) => (
+              <span class="tag">{tag}</span>
+            ))}
+          </div>
+        )
+      }
+
+      <div class="byline">
+        <span class="byline-avatar" aria-hidden="true"></span>
+        <div>
+          <div class="byline-name">{t('siteName', locale)}</div>
+          <div class="byline-tagline">{t('authorTagline', locale)}</div>
+        </div>
+      </div>
+    </header>
+
     {
       entry.cover && (
         <div class="entry-cover">
@@ -51,58 +105,208 @@ const dateLabel =
         </div>
       )
     }
-    <header class="entry-header">
-      <h1>{entry.title}</h1>
-      {
-        dateLabel && (
-          <time datetime={entry.publishedAt}>
-            {t('publishedOn', locale)}: {dateLabel}
-          </time>
-        )
-      }
-    </header>
+
     <ContentBody blocks={entry.content} />
-    <p class="entry-back"><a href={homePath}>{t('backToHome', locale)}</a></p>
+
+    <div class="share">
+      <span class="share-label">{t('shareThis', locale)}</span>
+      <div class="share-links">
+        <a
+          class="share-btn"
+          href={xShare}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={t('shareOnX', locale)}
+          title={t('shareOnX', locale)}>X</a
+        >
+        <a
+          class="share-btn"
+          href={liShare}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={t('shareOnLinkedIn', locale)}
+          title={t('shareOnLinkedIn', locale)}>in</a
+        >
+        <button
+          class="share-btn"
+          type="button"
+          data-copy-link
+          data-url={shareUrl}
+          data-copied={t('copiedLink', locale)}
+          aria-label={t('copyLink', locale)}
+          title={t('copyLink', locale)}>↗</button
+        >
+      </div>
+    </div>
+
+    <div class="entry-newsletter">
+      <Newsletter locale={locale} variant="card" />
+    </div>
   </article>
+
+  <script is:inline>
+    (function () {
+      var btn = document.querySelector('[data-copy-link]');
+      if (!btn) return;
+      btn.addEventListener('click', function () {
+        var url = btn.getAttribute('data-url') || location.href;
+        var done = function () {
+          var prev = btn.textContent;
+          btn.textContent = '✓';
+          btn.setAttribute('title', btn.getAttribute('data-copied') || '');
+          setTimeout(function () {
+            btn.textContent = prev;
+          }, 1600);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url).then(done).catch(function () {});
+        } else {
+          try {
+            var ta = document.createElement('textarea');
+            ta.value = url;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            done();
+          } catch (_) {}
+        }
+      });
+    })();
+  </script>
 </BaseLayout>
 
 <style>
   .entry {
     max-width: var(--content-width);
     margin: 0 auto;
-    padding-top: clamp(24px, 5vw, 48px);
+    padding-top: clamp(36px, 5vw, 56px);
   }
+
+  .entry-back {
+    font: italic 400 13px var(--font-serif);
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+  .entry-back:hover {
+    color: var(--g-magenta);
+  }
+
+  .entry-header {
+    margin-top: 26px;
+  }
+  .entry-meta {
+    font: 400 12px var(--font-mono);
+    letter-spacing: 0.04em;
+    color: var(--color-accent);
+    margin-bottom: 16px;
+  }
+  .entry-title {
+    margin: 0;
+    font: 500 clamp(31px, 5.5vw, 54px) / 1.08 var(--font-serif);
+    letter-spacing: -0.02em;
+    color: var(--color-text);
+  }
+
+  .entry-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 24px;
+  }
+  .tag {
+    font: 400 11px var(--font-mono);
+    color: var(--color-accent);
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    padding: 3px 10px;
+  }
+
+  .byline {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 1px solid var(--color-border);
+  }
+  .byline-avatar {
+    width: 40px;
+    height: 40px;
+    flex: none;
+    border-radius: 50%;
+    background: conic-gradient(
+      from 200deg,
+      var(--g-gold),
+      var(--g-orange),
+      var(--g-magenta),
+      var(--g-purple),
+      var(--g-gold)
+    );
+  }
+  .byline-name {
+    font: 500 15px var(--font-serif);
+    color: var(--color-text);
+  }
+  .byline-tagline {
+    font: 400 12px var(--font-mono);
+    color: var(--color-subtle);
+  }
+
   .entry-cover {
     aspect-ratio: 16 / 9;
     border-radius: var(--radius);
     overflow: hidden;
-    margin-bottom: var(--space-5);
+    margin-top: 40px;
   }
-  .entry-header {
-    margin-bottom: var(--space-5);
+
+  /* treść (ContentBody) sama trzyma odstęp od góry przez margin pierwszego bloku;
+     dodajemy zapas nad prozą */
+  .entry :global(.content-body) {
+    margin-top: 40px;
   }
-  .entry-header h1 {
-    margin: 0;
-    font: 500 clamp(30px, 5vw, 48px) / 1.08 var(--font-serif);
-    letter-spacing: -0.015em;
-    color: var(--color-text);
+
+  .share {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px solid var(--color-border);
   }
-  .entry-header time {
-    display: block;
-    font: 400 12px var(--font-mono);
-    color: var(--color-accent);
-    margin-top: var(--space-3);
+  .share-label {
+    font: 500 11px var(--font-mono);
+    color: var(--color-subtle);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
   }
-  .entry-back {
-    margin-top: var(--space-6);
-    font-family: var(--font-mono);
-    font-size: 0.85rem;
+  .share-links {
+    display: flex;
+    gap: 9px;
   }
-  .entry-back a {
+  .share-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid #d8c9ad;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font: 500 12px var(--font-mono);
+    color: var(--color-muted);
     text-decoration: none;
-    color: var(--color-faint);
+    cursor: pointer;
+    transition:
+      border-color 0.15s ease,
+      color 0.15s ease;
   }
-  .entry-back a:hover {
+  .share-btn:hover {
+    border-color: var(--color-accent);
     color: var(--color-accent);
+  }
+
+  .entry-newsletter {
+    margin: 56px 0 8px;
   }
 </style>

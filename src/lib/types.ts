@@ -5,10 +5,12 @@ export type Locale = 'pl' | 'en';
 export type EntryType = 'article' | 'page' | 'home';
 
 export interface ContentBlock {
-  type: 'h1' | 'h2' | 'h3' | 'p' | 'ul' | 'youtube';
+  type: 'h1' | 'h2' | 'h3' | 'p' | 'ul' | 'quote' | 'code' | 'youtube';
   html?: string;
   items?: string[];
   youtubeId?: string;
+  code?: string; // surowy tekst bloku code (bez HTML)
+  lang?: string; // język bloku code (np. 'javascript')
 }
 
 export interface Entry {

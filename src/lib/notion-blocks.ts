@@ -55,7 +55,8 @@ async function fetchAllBlocks(client: Client, blockId: string): Promise<BlockObj
 
 // Renderer treści strony Notion → uproszczony model bloków (v1).
 // Obsługiwane: nagłówki h1–h3, listy (bulleted), akapity (bold/italic/code/link),
-// YouTube (paragraf-tylko-link, blok video, blok embed). Reszta pomijana w v1.
+// cytaty (quote → pull-quote), bloki kodu (code), YouTube (paragraf-tylko-link,
+// blok video, blok embed). Reszta pomijana w v1.
 export async function getContentBlocks(client: Client, pageId: string): Promise<ContentBlock[]> {
   const blocks = await fetchAllBlocks(client, pageId);
   const out: ContentBlock[] = [];
@@ -97,6 +98,18 @@ export async function getContentBlocks(client: Client, pageId: string): Promise<
         }
         break;
       }
+      case 'quote':
+        flushList();
+        out.push({ type: 'quote', html: richTextToHtml(block.quote.rich_text) });
+        break;
+      case 'code':
+        flushList();
+        out.push({
+          type: 'code',
+          code: richTextPlain(block.code.rich_text),
+          lang: block.code.language,
+        });
+        break;
       case 'video': {
         flushList();
         const url = block.video.type === 'external' ? block.video.external.url : null;

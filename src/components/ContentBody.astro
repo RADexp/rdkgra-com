@@ -14,6 +14,13 @@ const { blocks } = Astro.props;
       if (b.type === 'h2') return <h2 set:html={b.html} />;
       if (b.type === 'h3') return <h3 set:html={b.html} />;
       if (b.type === 'p') return <p set:html={b.html} />;
+      if (b.type === 'quote') return <blockquote class="pullquote" set:html={b.html} />;
+      if (b.type === 'code')
+        return (
+          <pre class="code">
+            <code>{b.code}</code>
+          </pre>
+        );
       if (b.type === 'ul')
         return (
           <ul>
@@ -42,37 +49,119 @@ const { blocks } = Astro.props;
 <style>
   .content-body {
     font-family: var(--font-serif);
-    font-size: 1.125rem;
-    line-height: 1.75;
-    color: var(--color-text);
+    color: var(--color-prose);
   }
+
+  /* Nagłówki śródtekstowe */
   .content-body :global(h1),
   .content-body :global(h2),
   .content-body :global(h3) {
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    line-height: 1.2;
-    margin: var(--space-5) 0 var(--space-3);
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    line-height: 1.18;
+    color: var(--color-text);
+    margin: 44px 0 0;
+  }
+  .content-body :global(h1) {
+    font-size: 34px;
   }
   .content-body :global(h2) {
-    font-size: 1.6rem;
+    font-size: 30px;
   }
   .content-body :global(h3) {
-    font-size: 1.3rem;
+    font-size: 24px;
+    letter-spacing: -0.01em;
   }
-  .content-body :global(p),
-  .content-body :global(ul) {
-    margin: 0 0 var(--space-3);
+
+  /* Akapity */
+  .content-body :global(p) {
+    font-size: 19px;
+    line-height: 1.72;
+    margin: 20px 0 0;
   }
+  /* Pierwszy akapit = lead (większy, cieplejszy) */
+  .content-body > :global(p:first-child) {
+    font-size: 22px;
+    color: var(--color-muted);
+  }
+  .content-body :global(strong) {
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  /* Linki w prozie — delikatne podkreślenie w kolorze marki */
   .content-body :global(a) {
     color: var(--color-accent);
-    text-decoration-thickness: 1px;
-    text-underline-offset: 2px;
+    border-bottom: 1px solid var(--color-underline);
+    text-decoration: none;
+    transition: color 0.15s ease;
   }
+  .content-body :global(a:hover) {
+    color: var(--g-magenta);
+  }
+
+  /* Listy — myślnikowe punktory w kolorze akcentu */
+  .content-body :global(ul) {
+    margin: 20px 0 0;
+    padding-left: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .content-body :global(li) {
+    position: relative;
+    font-size: 18px;
+    line-height: 1.6;
+    padding-left: 26px;
+  }
+  .content-body :global(li)::before {
+    content: '—';
+    position: absolute;
+    left: 0;
+    color: var(--color-accent);
+  }
+
+  /* Pull-quote (cytat z Notion) — gradientowa lewa krawędź */
+  .content-body :global(.pullquote) {
+    margin: 40px 0 0;
+    padding: 6px 0 6px 26px;
+    border-left: 3px solid transparent;
+    border-image: linear-gradient(180deg, var(--g-gold), var(--g-magenta), var(--g-purple)) 1;
+    font: 500 26px/1.4 var(--font-serif);
+    font-style: italic;
+    color: var(--color-text);
+  }
+
+  /* Blok kodu — ciemna karta, JetBrains Mono */
+  .content-body :global(.code) {
+    margin: 26px 0 0;
+    background: var(--color-code-bg);
+    border-radius: 12px;
+    padding: 20px 22px;
+    overflow: auto;
+    font: 400 13.5px/1.7 var(--font-mono);
+    color: var(--color-code-text);
+  }
+  .content-body :global(.code code) {
+    font: inherit;
+    color: inherit;
+    white-space: pre;
+  }
+  /* Kod w tekście (inline) */
+  .content-body :global(p code),
+  .content-body :global(li code) {
+    font: 0.88em var(--font-mono);
+    background: rgba(180, 83, 31, 0.08);
+    color: var(--color-accent);
+    padding: 1px 6px;
+    border-radius: 6px;
+  }
+
   .video-embed {
     position: relative;
     aspect-ratio: 16 / 9;
-    margin: var(--space-4) 0;
+    margin: 30px 0 0;
   }
   .video-embed :global(iframe) {
     position: absolute;
@@ -81,5 +170,50 @@ const { blocks } = Astro.props;
     height: 100%;
     border: 0;
     border-radius: var(--radius);
+  }
+
+  /* ── skala mobilna (design .mprose) ─────────────────────────────────── */
+  @media (max-width: 640px) {
+    .content-body :global(h1) {
+      font-size: 26px;
+    }
+    .content-body :global(h2) {
+      font-size: 23px;
+      line-height: 1.2;
+    }
+    .content-body :global(h3) {
+      font-size: 20px;
+    }
+    .content-body :global(h1),
+    .content-body :global(h2),
+    .content-body :global(h3) {
+      margin-top: 32px;
+    }
+    .content-body :global(p) {
+      font-size: 16.5px;
+      line-height: 1.7;
+      margin-top: 16px;
+    }
+    .content-body > :global(p:first-child) {
+      font-size: 18px;
+    }
+    .content-body :global(ul) {
+      margin-top: 16px;
+      gap: 10px;
+    }
+    .content-body :global(li) {
+      font-size: 15px;
+      line-height: 1.55;
+      padding-left: 22px;
+    }
+    .content-body :global(.pullquote) {
+      font-size: 20px;
+      margin-top: 30px;
+      padding-left: 18px;
+    }
+    .content-body :global(.code) {
+      font-size: 12px;
+      padding: 16px 18px;
+    }
   }
 </style>

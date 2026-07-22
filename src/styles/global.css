@@ -10,12 +10,16 @@
   --color-bg-edge: #e9e7e1; /* głębszy odcień krawędzi/stopki */
   --color-surface: #fffdf8; /* karty */
   --color-text: #1d1a15;
+  --color-prose: #3b362c; /* tekst czytelniczy w treści artykułu */
   --color-muted: #57503f; /* lead / treść drugorzędna */
   --color-muted-2: #77705f; /* opisy na kartach */
   --color-faint: #9b917f; /* nieaktywna nawigacja */
   --color-subtle: #a89e8c; /* najdrobniejsze metadane */
   --color-border: #e6ddcc;
+  --color-underline: #e6c3a3; /* podkreślenie linków w prozie */
   --color-accent: #b4531f; /* pomarańcz — linki / akcenty */
+  --color-code-bg: #1d1a15; /* tło bloków kodu */
+  --color-code-text: #e9e2d4; /* tekst bloków kodu */
 
   /* stopy gradientu (akcenty marki) */
   --g-gold: #f5a623;
