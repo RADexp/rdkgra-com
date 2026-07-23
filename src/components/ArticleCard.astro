@@ -23,12 +23,18 @@ const dateLabel = entry.publishedAt
 const category = entry.categories[0];
 const meta = [dateLabel, category?.toUpperCase()].filter(Boolean).join(' · ');
 
-// Gradient-placeholder dla kart bez okładki — deterministyczny wybór z 4 wariantów.
+// Gradient-placeholder dla kart bez okładki — deterministyczny wybór z 10 wariantów.
 const GRADIENTS = [
   'conic-gradient(from 210deg at 30% 30%, #f5a623, #e0592f, #f6f2ea, #f5a623)',
   'conic-gradient(from 120deg at 70% 40%, #7c4fd4, #c23b7a, #f6f2ea, #7c4fd4)',
   'linear-gradient(135deg, #f5a623, #c23b7a 60%, #7c4fd4)',
   'conic-gradient(from 300deg at 50% 60%, #e0592f, #f5a623, #f6f2ea, #e0592f)',
+  'radial-gradient(125% 125% at 75% 25%, #f5a623, #c23b7a 55%, #7c4fd4)',
+  'conic-gradient(from 45deg at 40% 55%, #7c4fd4, #f6f2ea, #f5a623, #c23b7a, #7c4fd4)',
+  'linear-gradient(60deg, #f6f2ea, #f5a623 45%, #e0592f)',
+  'radial-gradient(135% 135% at 25% 80%, #f6f2ea, #ec7fa4 45%, #c23b7a)',
+  'conic-gradient(from 160deg at 60% 40%, #c23b7a, #7c4fd4, #f6f2ea, #c23b7a)',
+  'linear-gradient(200deg, #7c4fd4, #c23b7a 55%, #f5a623)',
 ];
 let hash = 0;
 for (const ch of entry.id) hash = (hash + ch.charCodeAt(0)) % GRADIENTS.length;
