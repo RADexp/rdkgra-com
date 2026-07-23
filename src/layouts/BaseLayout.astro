@@ -82,6 +82,7 @@ const fullTitle = `${title} — ${t('siteName', locale)}`;
     <header class="site-header">
       <nav class="site-nav" aria-label={locale === 'pl' ? 'Główna nawigacja' : 'Main navigation'}>
         <ul class="nav-links">
+          <li><a class="nav-writing" href={homePath}>{t('navWriting', locale)}</a></li>
           {navPages.map((p) => (
             <li><a href={p.path}>{p.title}</a></li>
           ))}

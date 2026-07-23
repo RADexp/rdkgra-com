@@ -6,6 +6,7 @@ export const dict = {
   siteName: { en: 'Radek Grabarek', pl: 'Radek Grabarek' },
   nav_home: { en: 'Home', pl: 'Strona główna' },
   nav_blog: { en: 'Blog', pl: 'Blog' },
+  navWriting: { en: 'Writing', pl: 'Teksty' },
   readMore: { en: 'Read more', pl: 'Czytaj dalej' },
   latestPosts: { en: 'Recent essays & build logs', pl: 'Najnowsze eseje i dzienniki' },
   noPosts: { en: 'No posts yet.', pl: 'Brak wpisów.' },
