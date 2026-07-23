@@ -20,6 +20,10 @@ const homePath = locale === 'pl' ? '/pl/' : '/';
 const translationPath = entry.translation ? urlFor(entry.translation) : undefined;
 const translationLocale = entry.translation?.locale;
 
+// Pigułka przełącznika języka w rzędzie tagów — tekst zawsze w języku DOCELOWYM.
+const langPillLabel = locale === 'en' ? 'Czytaj po polsku' : 'Read in English';
+const langPillFlag = locale === 'en' ? 'pl' : 'en';
+
 const description =
   entry.excerpt ??
   entry.content.find((b) => b.type === 'p' && b.html)?.html?.replace(/<[^>]+>/g, '').slice(0, 200);
@@ -80,11 +84,17 @@ const liShare = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURI
       <h1 class="entry-title">{entry.title}</h1>
 
       {
-        entry.tags.length > 0 && (
+        (entry.tags.length > 0 || translationPath) && (
           <div class="entry-tags">
             {entry.tags.map((tag) => (
               <span class="tag">{tag}</span>
             ))}
+            {translationPath && (
+              <a class="lang-pill" href={translationPath} rel="alternate" hreflang={translationLocale}>
+                <span class={`lang-pill-flag flag-${langPillFlag}`} aria-hidden="true"></span>
+                {langPillLabel}
+              </a>
+            )}
           </div>
         )
       }
@@ -220,6 +230,45 @@ const liShare = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURI
     border: 1px solid var(--color-border);
     border-radius: 999px;
     padding: 3px 10px;
+  }
+
+  .lang-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font: 400 11px var(--font-mono);
+    color: #57503f;
+    text-decoration: none;
+    border: 1px solid #d8c9ad;
+    border-radius: 999px;
+    padding: 3px 10px 3px 6px;
+    background: #fffdf8;
+    cursor: pointer;
+    transition:
+      background-color 0.15s ease,
+      border-color 0.15s ease,
+      color 0.15s ease;
+  }
+  .lang-pill:hover {
+    background: #f6efe0;
+    border-color: #c9b892;
+    color: var(--color-accent);
+  }
+
+  .lang-pill-flag {
+    display: block;
+    width: 16px;
+    height: 11px;
+    flex: none;
+    border-radius: 2px;
+    overflow: hidden;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+  }
+  .lang-pill-flag.flag-pl {
+    background: linear-gradient(to bottom, #fdfaf2 0 50%, #c9503a 50% 100%);
+  }
+  .lang-pill-flag.flag-en {
+    background: linear-gradient(to bottom, #3c5a99 0 50%, #c9503a 50% 100%);
   }
 
   .byline {
