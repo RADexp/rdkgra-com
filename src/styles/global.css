@@ -146,7 +146,7 @@ a {
 .nav-right {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 26px;
   margin-left: auto;
 }
 
@@ -161,15 +161,32 @@ a {
   color: var(--color-accent);
 }
 
-.lang-switch {
-  font: 400 12px var(--font-mono);
-  color: var(--color-faint);
-  text-decoration: none;
-  transition: color 0.15s ease;
+.lang-toggle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font: 500 12px var(--font-mono);
+  letter-spacing: 0.04em;
 }
 
-.lang-switch:hover {
-  color: var(--color-accent);
+.lang-current {
+  color: #1d1a15;
+}
+
+.lang-link {
+  color: #d6480f;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+
+.lang-link:hover {
+  color: #b23c0c;
+  text-decoration: underline;
+}
+
+.lang-sep {
+  color: #cdc2a8;
 }
 
 /* ── główna kolumna ────────────────────────────────────────────────────── */

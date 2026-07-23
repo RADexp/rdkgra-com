@@ -25,8 +25,6 @@ export const dict = {
     en: 'Get the next letter in your inbox.',
     pl: 'Dostań kolejny list na maila.',
   },
-  // etykieta linku przełącznika = język, NA KTÓRY przełączamy
-  switchToOther: { en: 'Polski', pl: 'English' },
   // hero + formularz zapisu do newslettera
   heroTagline: { en: 'A field notebook · learning in public', pl: 'Notatnik terenowy · nauka na żywo' },
   subscribePlaceholder: { en: 'Your email to follow along', pl: 'Twój e-mail, żeby śledzić' },

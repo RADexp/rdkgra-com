@@ -82,12 +82,22 @@ const fullTitle = `${title} — ${t('siteName', locale)}`;
           ))}
         </ul>
         <div class="nav-right">
-          <a class="brand" href={homePath}>radekgrabarek<span class="tld">.com</span></a>
           {translationPath && (
-            <a class="lang-switch" href={translationPath} rel="alternate" hreflang={translationLocale}>
-              {t('switchToOther', locale)}
-            </a>
+            <div class="lang-toggle" aria-label={locale === 'pl' ? 'Przełącznik języka' : 'Language switcher'}>
+              {locale === 'en' ? (
+                <span class="lang-current">EN</span>
+              ) : (
+                <a class="lang-link" href={translationPath} rel="alternate" hreflang="en">EN</a>
+              )}
+              <span class="lang-sep">/</span>
+              {locale === 'pl' ? (
+                <span class="lang-current">PL</span>
+              ) : (
+                <a class="lang-link" href={translationPath} rel="alternate" hreflang="pl">PL</a>
+              )}
+            </div>
           )}
+          <a class="brand" href={homePath}>radekgrabarek<span class="tld">.com</span></a>
         </div>
       </nav>
     </header>
@@ -108,7 +118,7 @@ const fullTitle = `${title} — ${t('siteName', locale)}`;
       document.addEventListener(
         'click',
         function (e) {
-          var a = e.target.closest && e.target.closest('.lang-switch');
+          var a = e.target.closest && e.target.closest('.lang-link');
           if (a) {
             try {
               localStorage.setItem('langChosen', '1');
