@@ -67,20 +67,22 @@ const description = firstParagraph ? unescape(firstParagraph).slice(0, 200) : un
 
   <section class="hero">
     <div class="hero-orb" aria-hidden="true"></div>
-    <div class="hero-inner">
-      <p class="eyebrow">{t('heroTagline', locale)}</p>
-      {
-        headingHtml ? (
-          <h1 class="hero-title" set:html={headingHtml} />
-        ) : (
-          <h1 class="hero-title">{heroTitle}</h1>
-        )
-      }
-      <div class="hero-lead">
-        {leadBlocks.map((b) => (b.type === 'p' && b.html ? <p set:html={b.html} /> : null))}
-      </div>
+    <div class="hero-container">
+      <div class="hero-inner">
+        <p class="eyebrow">{t('heroTagline', locale)}</p>
+        {
+          headingHtml ? (
+            <h1 class="hero-title" set:html={headingHtml} />
+          ) : (
+            <h1 class="hero-title">{heroTitle}</h1>
+          )
+        }
+        <div class="hero-lead">
+          {leadBlocks.map((b) => (b.type === 'p' && b.html ? <p set:html={b.html} /> : null))}
+        </div>
 
-      <Newsletter locale={locale} variant="hero" />
+        <Newsletter locale={locale} variant="hero" />
+      </div>
     </div>
   </section>
 
@@ -105,7 +107,14 @@ const description = firstParagraph ? unescape(firstParagraph).slice(0, 200) : un
   .hero {
     position: relative;
     overflow: hidden;
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
     padding: clamp(36px, 6vw, 60px) 0 clamp(40px, 6vw, 58px);
+  }
+  .hero-container {
+    max-width: var(--page-max);
+    margin: 0 auto;
+    padding: 0 var(--page-pad);
   }
   .hero-orb {
     position: absolute;
