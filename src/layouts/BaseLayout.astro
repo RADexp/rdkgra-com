@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import { t } from '../i18n/dict';
 import type { Locale } from '../lib/types';
+import LangToggle from '../components/LangToggle.astro';
 
 interface NavPage {
   title: string;
@@ -45,6 +46,11 @@ const enHref =
 if (enHref) alternates.push({ hreflang: 'x-default', href: enHref });
 
 const fullTitle = `${title} — ${t('siteName', locale)}`;
+
+const navItems = [
+  { path: homePath, title: t('navWriting', locale), active: true },
+  ...navPages.map((p) => ({ path: p.path, title: p.title, active: false })),
+];
 ---
 
 <!doctype html>
@@ -82,31 +88,37 @@ const fullTitle = `${title} — ${t('siteName', locale)}`;
     <header class="site-header">
       <nav class="site-nav" aria-label={locale === 'pl' ? 'Główna nawigacja' : 'Main navigation'}>
         <ul class="nav-links">
-          <li><a class="nav-writing" href={homePath}>{t('navWriting', locale)}</a></li>
-          {navPages.map((p) => (
-            <li><a href={p.path}>{p.title}</a></li>
+          {navItems.map((item) => (
+            <li><a class={item.active ? 'nav-writing' : undefined} href={item.path}>{item.title}</a></li>
           ))}
         </ul>
         <div class="nav-right">
-          {translationPath && (
-            <div class="lang-toggle" aria-label={locale === 'pl' ? 'Przełącznik języka' : 'Language switcher'}>
-              {locale === 'en' ? (
-                <span class="lang-current">EN</span>
-              ) : (
-                <a class="lang-link" href={translationPath} rel="alternate" hreflang="en">EN</a>
-              )}
-              <span class="lang-sep">/</span>
-              {locale === 'pl' ? (
-                <span class="lang-current">PL</span>
-              ) : (
-                <a class="lang-link" href={translationPath} rel="alternate" hreflang="pl">PL</a>
-              )}
-            </div>
-          )}
+          <LangToggle locale={locale} translationPath={translationPath} />
           <a class="brand" href={homePath}>radekgrabarek<span class="tld">.com</span></a>
         </div>
+        <button
+          type="button"
+          class="hamburger-btn"
+          id="menuToggle"
+          aria-label="Toggle menu"
+          aria-expanded="false"
+          aria-controls="mobileMenu"
+        >
+          <span class="hamburger-bar"></span>
+          <span class="hamburger-bar"></span>
+          <span class="hamburger-bar"></span>
+        </button>
       </nav>
     </header>
+
+    <div class="mobile-menu" id="mobileMenu" aria-hidden="true">
+      <ul class="mobile-menu-links">
+        {navItems.map((item) => (
+          <li><a class={item.active ? 'nav-writing' : undefined} href={item.path}>{item.title}</a></li>
+        ))}
+      </ul>
+      <LangToggle locale={locale} translationPath={translationPath} />
+    </div>
 
     <main class="site-main">
       <slot />
@@ -133,6 +145,71 @@ const fullTitle = `${title} — ${t('siteName', locale)}`;
         },
         true,
       );
+    </script>
+
+    <script>
+      const menuToggle = document.getElementById('menuToggle');
+      const mobileMenu = document.getElementById('mobileMenu');
+
+      if (menuToggle && mobileMenu) {
+        const isOpen = () => mobileMenu.classList.contains('is-open');
+
+        const onKeydown = (e: KeyboardEvent) => {
+          if (e.key === 'Escape') {
+            closeMenu();
+            return;
+          }
+          if (e.key === 'Tab') {
+            const focusable = mobileMenu.querySelectorAll<HTMLElement>('a, button');
+            if (!focusable.length) return;
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            if (e.shiftKey && document.activeElement === first) {
+              e.preventDefault();
+              last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+              e.preventDefault();
+              first.focus();
+            }
+          }
+        };
+
+        function openMenu() {
+          mobileMenu!.classList.add('is-open');
+          menuToggle!.setAttribute('aria-expanded', 'true');
+          mobileMenu!.setAttribute('aria-hidden', 'false');
+          document.body.classList.add('menu-open');
+          mobileMenu!.querySelector<HTMLElement>('a')?.focus();
+          document.addEventListener('keydown', onKeydown);
+        }
+
+        function closeMenu(options: { returnFocus?: boolean } = {}) {
+          const { returnFocus = true } = options;
+          mobileMenu!.classList.remove('is-open');
+          menuToggle!.setAttribute('aria-expanded', 'false');
+          mobileMenu!.setAttribute('aria-hidden', 'true');
+          document.body.classList.remove('menu-open');
+          document.removeEventListener('keydown', onKeydown);
+          if (returnFocus) menuToggle!.focus();
+        }
+
+        menuToggle.addEventListener('click', () => {
+          isOpen() ? closeMenu() : openMenu();
+        });
+
+        mobileMenu.addEventListener('click', (e) => {
+          if (e.target === mobileMenu) closeMenu();
+        });
+
+        mobileMenu.querySelectorAll('a').forEach((a) => {
+          a.addEventListener('click', () => closeMenu({ returnFocus: false }));
+        });
+
+        const mql = window.matchMedia('(max-width: 767px)');
+        mql.addEventListener('change', (e) => {
+          if (!e.matches && isOpen()) closeMenu({ returnFocus: false });
+        });
+      }
     </script>
   </body>
 </html>

@@ -1,0 +1,26 @@
+---
+import type { Locale } from '../lib/types';
+
+interface Props {
+  locale: Locale;
+  translationPath?: string;
+}
+
+const { locale, translationPath } = Astro.props;
+---
+
+{translationPath && (
+  <div class="lang-toggle" aria-label={locale === 'pl' ? 'Przełącznik języka' : 'Language switcher'}>
+    {locale === 'en' ? (
+      <span class="lang-current">EN</span>
+    ) : (
+      <a class="lang-link" href={translationPath} rel="alternate" hreflang="en">EN</a>
+    )}
+    <span class="lang-sep">/</span>
+    {locale === 'pl' ? (
+      <span class="lang-current">PL</span>
+    ) : (
+      <a class="lang-link" href={translationPath} rel="alternate" hreflang="pl">PL</a>
+    )}
+  </div>
+)}
