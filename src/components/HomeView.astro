@@ -42,6 +42,14 @@ const unescape = (s: string): string =>
     .replace(/&gt;/g, '>')
     .trim();
 
+// Skrypt auto-wykrywania języka przeglądarki. Musi być wstrzyknięty przez
+// `set:html`, bo <script> umieszczony wewnątrz wyrażenia {...} jest parsowany
+// jak JSX — klamry kodu JS zostałyby potraktowane jako wyrażenia Astro.
+// (Poprzednia wersja emitowała dosłownie `{`…`}`, czyli blok z template
+// stringiem w środku: poprawny JS, który NIC nie robi — stąd brak redirectu.)
+// Kolejność z navigator.languages: wygrywa pierwszy język, który jest pl albo en.
+const langDetectScript = `(function(){try{if(location.pathname!=='/')return;if(localStorage.getItem('langChosen'))return;var ls=(navigator.languages&&navigator.languages.length)?navigator.languages:[navigator.language||''];for(var i=0;i<ls.length;i++){var l=(ls[i]||'').toLowerCase();if(l.indexOf('pl')===0){location.replace('/pl/');return;}if(l.indexOf('en')===0)return;}}catch(e){}})();`;
+
 const heroTitle = headingHtml ? unescape(headingHtml) : (home?.title ?? t('siteName', locale));
 const firstParagraph = leadBlocks.find((b) => b.type === 'p' && b.html)?.html;
 const description = firstParagraph ? unescape(firstParagraph).slice(0, 200) : undefined;
@@ -57,13 +65,7 @@ const description = firstParagraph ? unescape(firstParagraph).slice(0, 200) : un
   translationPath={translationPath}
   translationLocale={translationLocale}
 >
-  {
-    autoDetect && (
-      <script slot="head" is:inline>
-        {`(function(){try{if(location.pathname!=='/')return;if(localStorage.getItem('langChosen'))return;var l=(navigator.language||'').toLowerCase();if(l.indexOf('pl')===0)location.replace('/pl/');}catch(e){}})();`}
-      </script>
-    )
-  }
+  {autoDetect && <script slot="head" is:inline set:html={langDetectScript} />}
 
   <section class="hero">
     <div class="hero-orb" aria-hidden="true"></div>
