@@ -21,17 +21,6 @@ const homePath = locale === 'pl' ? '/pl/' : '/';
 const translationPath = home?.translation ? urlFor(home.translation) : undefined;
 const translationLocale = home?.translation?.locale;
 
-// Treść hero pochodzi z TREŚCI notatki HP w Notion, nie z pola „tytuł"
-// (tytuł to teraz tylko wewnętrzna nazwa wpisu). Pierwszy nagłówek w treści =
-// wielki tytuł hero; kursywa (<em>) w nim dostaje animowany gradient. Pozostałe
-// bloki (akapit „Notes from…") = lead pod tytułem, nad zapisem na newsletter.
-const heroBlocks: ContentBlock[] = home?.content ?? [];
-const headingIdx = heroBlocks.findIndex(
-  (b) => b.type === 'h1' || b.type === 'h2' || b.type === 'h3',
-);
-const headingHtml = headingIdx >= 0 ? heroBlocks[headingIdx].html : undefined;
-const leadBlocks = heroBlocks.filter((_, i) => i !== headingIdx);
-
 // Wersja czysto-tekstowa (bez tagów HTML) do <title>, OG i opisu SEO.
 const unescape = (s: string): string =>
   s
@@ -41,6 +30,32 @@ const unescape = (s: string): string =>
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .trim();
+
+// Usuwa pierwszy „[" i ostatni „]" z HTML (nawet gdy leżą wewnątrz np. <em>).
+const stripBrackets = (html: string): string => {
+  const first = html.indexOf('[');
+  const last = html.lastIndexOf(']');
+  if (first === -1 || last === -1 || last <= first) return html;
+  return html.slice(0, first) + html.slice(first + 1, last) + html.slice(last + 1);
+};
+
+// Treść hero pochodzi z TREŚCI notatki HP w Notion, nie z pola „tytuł"
+// (tytuł to teraz tylko wewnętrzna nazwa wpisu). Pierwszy nagłówek w treści =
+// wielki tytuł hero; kursywa (<em>) w nim dostaje animowany gradient. Akapit
+// zapisany w nawiasach kwadratowych, np. „[Notatnik terenowy · nauka na żywo]",
+// to eyebrow nad tytułem (nawiasy są usuwane). Pozostałe bloki = lead pod
+// tytułem, nad zapisem na newsletter.
+const heroBlocks: ContentBlock[] = home?.content ?? [];
+const headingIdx = heroBlocks.findIndex(
+  (b) => b.type === 'h1' || b.type === 'h2' || b.type === 'h3',
+);
+const headingHtml = headingIdx >= 0 ? heroBlocks[headingIdx].html : undefined;
+const eyebrowIdx = heroBlocks.findIndex(
+  (b) => b.type === 'p' && b.html && /^\[.*\]$/.test(unescape(b.html)),
+);
+const eyebrowHtml =
+  eyebrowIdx >= 0 ? stripBrackets(heroBlocks[eyebrowIdx].html!.trim()) : undefined;
+const leadBlocks = heroBlocks.filter((_, i) => i !== headingIdx && i !== eyebrowIdx);
 
 // Skrypt auto-wykrywania języka przeglądarki. Musi być wstrzyknięty przez
 // `set:html`, bo <script> umieszczony wewnątrz wyrażenia {...} jest parsowany
@@ -71,7 +86,7 @@ const description = firstParagraph ? unescape(firstParagraph).slice(0, 200) : un
     <div class="hero-orb" aria-hidden="true"></div>
     <div class="hero-container">
       <div class="hero-inner">
-        <p class="eyebrow">{t('heroTagline', locale)}</p>
+        {eyebrowHtml && <p class="eyebrow" set:html={eyebrowHtml} />}
         {
           headingHtml ? (
             <h1 class="hero-title" set:html={headingHtml} />

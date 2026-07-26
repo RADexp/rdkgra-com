@@ -27,7 +27,6 @@ export const dict = {
     pl: 'Dostań kolejny list na maila.',
   },
   // hero + formularz zapisu do newslettera
-  heroTagline: { en: 'A field notebook · learning in public', pl: 'Notatnik terenowy · nauka na żywo' },
   subscribePlaceholder: { en: 'Your email to follow along', pl: 'Twój e-mail, żeby śledzić' },
   subscribeCta: { en: 'Subscribe →', pl: 'Zapisz się →' },
   subscribeNote: {
