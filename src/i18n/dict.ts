@@ -27,11 +27,11 @@ export const dict = {
     pl: 'Dostań kolejny list na maila.',
   },
   // hero + formularz zapisu do newslettera
-  subscribePlaceholder: { en: 'Your email to follow along', pl: 'Twój e-mail, żeby śledzić' },
+  subscribePlaceholder: { en: 'Your email to follow along', pl: 'Twój email' },
   subscribeCta: { en: 'Subscribe →', pl: 'Zapisz się →' },
   subscribeNote: {
     en: 'one letter a week · unsubscribe anytime',
-    pl: 'jeden list tygodniowo · wypisz się w każdej chwili',
+    pl: 'Max 1 mail tygodniowo · wypisz się w każdej chwili',
   },
   subscribeLoading: { en: 'Adding you…', pl: 'Dodaję Cię…' },
   subscribeOk: {
