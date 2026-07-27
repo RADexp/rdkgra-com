@@ -172,7 +172,11 @@ const description = firstParagraph ? unescape(firstParagraph).slice(0, 200) : un
   }
   /* Kursywa w tytule (Notion <em>) = animowany, kolorowy gradient. */
   .hero-title :global(em) {
+    display: inline-block;
     font-style: italic;
+    line-height: 1.2;
+    padding: 0.05em 0.08em 0.1em 0.02em;
+    margin: 0 -0.08em -0.1em -0.02em;
     background: linear-gradient(
       90deg,
       var(--g-orange),
