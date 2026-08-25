@@ -9,6 +9,7 @@ const FORMAT_MAP: Record<string, EntryType> = {
   'blog post': 'article',
   podstrona: 'page',
   HP: 'home',
+  project: 'project',
 };
 
 const LANG_MAP: Record<string, Locale> = {
@@ -40,13 +41,35 @@ function getRelationId(prop: any): string | undefined {
   return prop?.relation?.[0]?.id ?? undefined;
 }
 
-// Lead na kafelku listy = pierwszy akapit treści (auto), przycięty.
-function excerptFrom(content: ContentBlock[]): string | undefined {
-  const first = content.find((b) => b.type === 'p' && b.html);
-  if (!first?.html) return undefined;
-  const text = first.html.replace(/<[^>]+>/g, '').trim();
-  if (!text) return undefined;
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]+>/g, '').trim();
+}
+
+function truncate(text: string): string {
   return text.length > 200 ? `${text.slice(0, 200).trimEnd()}…` : text;
+}
+
+// Lead na kafelku listy = tekst przed pierwszym dividerem (jeśli autor go
+// wstawił — patrz notion-blocks.ts), inaczej zachowanie sprzed tej funkcji:
+// tylko pierwszy akapit treści. Divider sam w sobie jest niewidoczny na
+// podstronie wpisu (patrz ContentBody) — to czysto autorski znacznik cięcia.
+function excerptFrom(content: ContentBlock[]): string | undefined {
+  const dividerIdx = content.findIndex((b) => b.type === 'divider');
+
+  if (dividerIdx === -1) {
+    const first = content.find((b) => b.type === 'p' && b.html);
+    if (!first?.html) return undefined;
+    const text = stripHtml(first.html);
+    return text ? truncate(text) : undefined;
+  }
+
+  const text = content
+    .slice(0, dividerIdx)
+    .filter((b) => b.type === 'p' && b.html)
+    .map((b) => stripHtml(b.html!))
+    .join(' ')
+    .trim();
+  return text ? truncate(text) : undefined;
 }
 
 async function fetchAllPages(client: Client, databaseId: string): Promise<PageObjectResponse[]> {
@@ -129,11 +152,12 @@ export async function getEntries(): Promise<Entry[]> {
       locale,
       slug,
       title,
-      excerpt: type === 'article' ? excerptFrom(content) : undefined,
+      excerpt: type === 'article' || type === 'project' ? excerptFrom(content) : undefined,
       cover: getUrl(props['URL okładki']),
       publishedAt: getDate(props['Data publikacji']),
       categories: getMultiSelect(props['Kategoria']),
       tags: getMultiSelect(props['Tagi']),
+      projectStage: type === 'project' ? getSelect(props['Etap Projektu']) || undefined : undefined,
       content,
     };
 
@@ -165,6 +189,12 @@ export function articlesFor(entries: Entry[], locale: Locale): Entry[] {
 
 export function pagesFor(entries: Entry[], locale: Locale): Entry[] {
   return entries.filter((e) => e.type === 'page' && e.locale === locale);
+}
+
+export function projectsFor(entries: Entry[], locale: Locale): Entry[] {
+  return entries
+    .filter((e) => e.type === 'project' && e.locale === locale)
+    .sort((a, b) => (b.publishedAt ?? '').localeCompare(a.publishedAt ?? ''));
 }
 
 export function homeFor(entries: Entry[], locale: Locale): Entry | undefined {

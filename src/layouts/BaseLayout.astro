@@ -47,8 +47,13 @@ if (enHref) alternates.push({ hreflang: 'x-default', href: enHref });
 
 const fullTitle = `${title} — ${t('siteName', locale)}`;
 
+// Podstrona /projects jest statyczna (nie z Notion "podstrona"), więc jej
+// ścieżka jest wyliczana lokalnie, tak jak homePath.
+const projectsPath = locale === 'pl' ? '/pl/projekty/' : '/projects/';
+
 const navItems = [
   { path: homePath, title: t('navWriting', locale), active: true },
+  { path: projectsPath, title: t('navProjects', locale), active: false },
   ...navPages.map((p) => ({ path: p.path, title: p.title, active: false })),
 ];
 ---

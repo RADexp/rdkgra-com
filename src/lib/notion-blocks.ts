@@ -108,7 +108,8 @@ async function fetchAllBlocks(client: Client, blockId: string): Promise<BlockObj
 // Obsługiwane: nagłówki h1–h3, listy (bulleted), akapity (bold/italic/code/link),
 // cytaty (quote → pull-quote), bloki kodu (code), obrazki (image, pobierane
 // i self-hostowane przy buildzie), YouTube (paragraf-tylko-link, blok video,
-// blok embed). Reszta pomijana w v1.
+// blok embed), divider (niewidoczny znacznik — patrz excerptFrom). Reszta
+// pomijana w v1.
 export async function getContentBlocks(client: Client, pageId: string): Promise<ContentBlock[]> {
   const blocks = await fetchAllBlocks(client, pageId);
   const out: ContentBlock[] = [];
@@ -183,6 +184,12 @@ export async function getContentBlocks(client: Client, pageId: string): Promise<
         if (ytId) out.push({ type: 'youtube', youtubeId: ytId });
         break;
       }
+      case 'divider':
+        // Znacznik autorski (patrz excerptFrom w notion.ts): wszystko przed
+        // pierwszym dividerem = lead na liście. Niewidoczny w treści strony.
+        flushList();
+        out.push({ type: 'divider' });
+        break;
       default:
         // inne typy (callout, table, itd.) pomijane w v1
         flushList();

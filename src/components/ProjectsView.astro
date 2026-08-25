@@ -1,0 +1,228 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ProjectCard from './ProjectCard.astro';
+import { getEntries, pagesFor, projectsFor, urlFor } from '../lib/notion';
+import { t } from '../i18n/dict';
+import { PROJECT_STAGES, canonicalStage, stageLabel, stageSlug } from '../lib/project-stage';
+import type { Locale } from '../lib/types';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+
+const entries = await getEntries();
+const projects = projectsFor(entries, locale);
+const navPages = pagesFor(entries, locale).map((p) => ({ title: p.title, path: urlFor(p) }));
+const homePath = locale === 'pl' ? '/pl/' : '/';
+
+// Podstrona statyczna (nie z Notion) — druga wersja językowa istnieje zawsze
+// pod stałą ścieżką, więc przełącznik PL/EN jest zawsze aktywny.
+const translationPath = locale === 'pl' ? '/projects/' : '/pl/projekty/';
+const translationLocale: Locale = locale === 'pl' ? 'en' : 'pl';
+
+const title = t('navProjects', locale);
+const description = t('projectsLead', locale).slice(0, 200);
+
+const stageCounts = PROJECT_STAGES.reduce<Record<string, number>>((acc, stage) => {
+  acc[stage] = projects.filter((p) => canonicalStage(p.projectStage) === stage).length;
+  return acc;
+}, {});
+---
+
+<BaseLayout
+  locale={locale}
+  title={title}
+  description={description}
+  homePath={homePath}
+  navPages={navPages}
+  translationPath={translationPath}
+  translationLocale={translationLocale}
+>
+  <section class="hero">
+    <div class="hero-orb" aria-hidden="true"></div>
+    <div class="hero-inner">
+      <p class="eyebrow">{t('projectsEyebrow', locale)}</p>
+      {
+        locale === 'pl' ? (
+          <h1 class="hero-title">
+            Projekty, w <em>kolejności</em> nauki.
+          </h1>
+        ) : (
+          <h1 class="hero-title">
+            Projects, in <em>order</em> of learning.
+          </h1>
+        )
+      }
+      <p class="hero-lead">{t('projectsLead', locale)}</p>
+    </div>
+  </section>
+
+  <section class="projects" aria-labelledby="projects-heading">
+    <h2 id="projects-heading" class="visually-hidden">{title}</h2>
+
+    {
+      projects.length > 0 && (
+        <div class="filters" role="group" aria-label={locale === 'pl' ? 'Filtruj projekty' : 'Filter projects'}>
+          <button type="button" class="chip chip-on" data-filter="all" aria-pressed="true">
+            {t('filterAll', locale)} · {projects.length}
+          </button>
+          {PROJECT_STAGES.map((stage) =>
+            stageCounts[stage] > 0 ? (
+              <button type="button" class="chip" data-filter={stageSlug(stage)} aria-pressed="false">
+                {stageLabel(stage, locale)}
+              </button>
+            ) : null,
+          )}
+        </div>
+      )
+    }
+
+    {
+      projects.length ? (
+        <div class="rows">
+          {projects.map((p, i) => (
+            <ProjectCard entry={p} locale={locale} index={i + 1} />
+          ))}
+        </div>
+      ) : (
+        <p class="empty">{t('noProjects', locale)}</p>
+      )
+    }
+  </section>
+
+  <script is:inline>
+    (function () {
+      var chips = document.querySelectorAll('[data-filter]');
+      var rows = document.querySelectorAll('.row[data-stage]');
+      if (!chips.length || !rows.length) return;
+      chips.forEach(function (chip) {
+        chip.addEventListener('click', function () {
+          var f = chip.getAttribute('data-filter');
+          chips.forEach(function (c) {
+            var on = c === chip;
+            c.classList.toggle('chip-on', on);
+            c.setAttribute('aria-pressed', on ? 'true' : 'false');
+          });
+          rows.forEach(function (row) {
+            var show = f === 'all' || row.getAttribute('data-stage') === f;
+            row.style.display = show ? '' : 'none';
+          });
+        });
+      });
+    })();
+  </script>
+</BaseLayout>
+
+<style>
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  .hero {
+    position: relative;
+    overflow: hidden;
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    padding: clamp(36px, 6vw, 60px) var(--page-pad) clamp(28px, 5vw, 44px);
+  }
+  .hero-orb {
+    position: absolute;
+    right: -70px;
+    top: -50px;
+    width: clamp(190px, 32vw, 340px);
+    height: clamp(190px, 32vw, 340px);
+    border-radius: 50%;
+    background: conic-gradient(
+      from 0deg,
+      var(--g-gold),
+      var(--g-orange),
+      var(--g-magenta),
+      var(--g-purple),
+      var(--g-gold)
+    );
+    filter: blur(4px);
+    opacity: 0.9;
+    animation: spinSlow 34s linear infinite;
+    -webkit-mask-image: radial-gradient(circle, #000 42%, transparent 62%);
+    mask-image: radial-gradient(circle, #000 42%, transparent 62%);
+    pointer-events: none;
+  }
+  .hero-inner {
+    position: relative;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  .eyebrow {
+    margin: 0 0 18px;
+    font: italic 400 13px var(--font-serif);
+    color: var(--color-accent);
+  }
+  .hero-title {
+    margin: 0;
+    font: 500 clamp(34px, 6vw, 58px) / 1.06 var(--font-serif);
+    letter-spacing: -0.015em;
+    color: var(--color-text);
+  }
+  .hero-title em {
+    font-style: italic;
+    background: linear-gradient(
+      90deg,
+      var(--g-orange),
+      var(--g-magenta),
+      var(--g-purple),
+      var(--g-orange)
+    );
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: gradShift 8s ease infinite;
+  }
+  .hero-lead {
+    margin: 22px 0 0;
+    max-width: 540px;
+    font: 400 clamp(16px, 2.4vw, 18px) / 1.7 var(--font-serif);
+    color: var(--color-muted);
+  }
+
+  .projects {
+    padding-bottom: var(--space-6);
+  }
+
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+    margin-bottom: 14px;
+  }
+  .chip {
+    font: 400 11.5px var(--font-mono);
+    color: var(--color-accent);
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    padding: 4px 12px;
+    background: var(--color-surface);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .chip.chip-on {
+    background: var(--color-text);
+    border-color: var(--color-text);
+    color: var(--color-bg);
+  }
+
+  .rows {
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .empty {
+    color: var(--color-muted);
+    font-style: italic;
+  }
+</style>

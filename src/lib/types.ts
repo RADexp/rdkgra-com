@@ -1,11 +1,12 @@
 export type Locale = 'pl' | 'en';
 
 // Format w Notion → typ wpisu w aplikacji.
-// 'blog post' → article, 'podstrona' → page, 'HP' → home (hero strony głównej).
-export type EntryType = 'article' | 'page' | 'home';
+// 'blog post' → article, 'podstrona' → page, 'HP' → home (hero strony głównej),
+// 'project' → project (build log projektu, listowany na /projects, ukryty z bloga).
+export type EntryType = 'article' | 'page' | 'home' | 'project';
 
 export interface ContentBlock {
-  type: 'h1' | 'h2' | 'h3' | 'p' | 'ul' | 'quote' | 'code' | 'youtube' | 'image';
+  type: 'h1' | 'h2' | 'h3' | 'p' | 'ul' | 'quote' | 'code' | 'youtube' | 'image' | 'divider';
   html?: string;
   items?: string[];
   youtubeId?: string;
@@ -25,7 +26,8 @@ export interface Entry {
   cover?: string; // zewnętrzny URL z "URL okładki" (hero / okładka artykułu)
   publishedAt?: string; // ISO date z "Data publikacji"
   categories: string[]; // "Kategoria" (multi_select) — do modelu, wygląd później
-  tags: string[]; // "Tagi" (multi_select) — jw.
+  tags: string[]; // "Tagi" (multi_select) — dla projektów: stack technologiczny
+  projectStage?: string; // "Etap projektu" (select) — tylko dla type === 'project'
   content: ContentBlock[]; // treść strony Notion (blocks) → HTML
   // Wersja w drugim języku (z relacji "Tłumaczenie"), o ile istnieje i jest
   // opublikowana. Steruje przełącznikiem języka i hreflang.

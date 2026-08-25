@@ -5,6 +5,7 @@ import ContentBody from './ContentBody.astro';
 import Newsletter from './Newsletter.astro';
 import { getEntries, pagesFor, urlFor } from '../lib/notion';
 import { t } from '../i18n/dict';
+import { stageDot, stageLabel, stageSlug } from '../lib/project-stage';
 import type { Entry, Locale } from '../lib/types';
 
 interface Props {
@@ -29,6 +30,12 @@ const description =
   entry.content.find((b) => b.type === 'p' && b.html)?.html?.replace(/<[^>]+>/g, '').slice(0, 200);
 
 const isArticle = entry.type === 'article';
+const isProject = entry.type === 'project';
+
+// Projekty wracają do /projects, nie do listy „Writing".
+const backHref = isProject ? (locale === 'pl' ? '/pl/projekty/' : '/projects/') : homePath;
+const backLabel = isProject ? t('backToProjects', locale) : t('backToWriting', locale);
+const stageText = isProject ? stageLabel(entry.projectStage, locale) : undefined;
 
 // Data w stylu „JUL 09, 2026" / „09 LIP 2026" (wersaliki, zależne od języka).
 const dateLabel =
@@ -57,7 +64,7 @@ const readMin = Math.max(1, Math.round(wordCount / 200));
 const readLabel = isArticle ? `${readMin} ${t('minRead', locale)}` : undefined;
 
 const category = entry.categories[0];
-const meta = [dateLabel, category?.toUpperCase(), readLabel].filter(Boolean).join(' · ');
+const metaText = [dateLabel, category?.toUpperCase(), readLabel].filter(Boolean).join(' · ');
 
 // Kanoniczny URL wpisu — do przycisków udostępniania.
 const site = Astro.site ?? new URL('https://radekgrabarek.com');
@@ -77,10 +84,21 @@ const liShare = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURI
   translationLocale={translationLocale}
 >
   <article class="entry">
-    <a class="entry-back" href={homePath}>{t('backToWriting', locale)}</a>
+    <a class="entry-back" href={backHref}>{backLabel}</a>
 
     <header class="entry-header">
-      {meta && <div class="entry-meta">{meta}</div>}
+      {
+        (metaText || stageText) && (
+          <div class="entry-meta">
+            {stageText && (
+              <span class={`stage-badge stage-${stageSlug(entry.projectStage)}`}>
+                {stageDot(entry.projectStage)} {stageText}
+              </span>
+            )}
+            {metaText && <span>{metaText}</span>}
+          </div>
+        )
+      }
       <h1 class="entry-title">{entry.title}</h1>
 
       {
@@ -206,10 +224,27 @@ const liShare = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURI
     margin-top: 26px;
   }
   .entry-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
     font: 400 12px var(--font-mono);
     letter-spacing: 0.04em;
     color: var(--color-accent);
     margin-bottom: 16px;
+  }
+  .stage-badge {
+    color: var(--color-accent);
+  }
+  .stage-badge.stage-shipped {
+    color: #3f7a45;
+  }
+  .stage-badge.stage-paused {
+    color: #9a7b2e;
+  }
+  .stage-badge.stage-archived,
+  .stage-badge.stage-unknown {
+    color: var(--color-subtle);
   }
   .entry-title {
     margin: 0;

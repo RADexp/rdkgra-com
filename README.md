@@ -18,7 +18,8 @@ Routing i18n:
 | | 🇬🇧 Angielski (domyślny, bez prefiksu) | 🇵🇱 Polski (`/pl/`) |
 |---|---|---|
 | Strona główna | `/` | `/pl/` |
-| Artykuł / podstrona | `/[slug]` | `/pl/[slug]` |
+| Artykuł / podstrona / projekt | `/[slug]` | `/pl/[slug]` |
+| Lista projektów | `/projects` | `/pl/projekty` |
 | RSS | `/rss.xml` | `/pl/rss.xml` |
 
 - Slug generowany z tytułu, **osobno per język** (PL i EN mogą mieć różne slugi).
@@ -32,15 +33,17 @@ Routing i18n:
 |---|---|---|
 | Tytuł | title | tytuł + podstawa sluga |
 | Język | select (Polski/Angielski) | wersja językowa |
-| Format | select (blog post/podstrona/HP) | artykuł / strona statyczna / hero strony głównej |
-| Status | select (Draft/Opublikowane) | **renderowane tylko „Opublikowane"** |
+| Format | select (blog post/podstrona/HP/project) | artykuł / strona statyczna / hero strony głównej / projekt (build log na `/projects`, ukryty z bloga) |
+| Status | select (Draft/Opublikowane) | **renderowane tylko „Opublikowane"** — to jest jedyna brama publikacji, także dla projektów |
+| Etap Projektu | select (Shipped/In progress/Paused/Archived) | **tylko dla Format = project** — plakietka statusu na liście i podstronie; wartość spoza tego zestawu po prostu wyświetla się surowo |
 | Tłumaczenie | relation | powiązanie PL↔EN |
 | Data publikacji | date | sortowanie + wyświetlanie |
 | URL okładki | url | okładka artykułu / obrazek hero / OG |
-| Kategoria, Tagi | multi_select | wczytywane do modelu (wygląd po design handoff) |
+| Kategoria | multi_select | wczytywane do modelu, wyświetlane jako kategoria na artykułach |
+| Tagi | multi_select | pigułki tagów na artykułach/podstronach; **dla projektów pełni rolę stacku technologicznego** (np. „Astro", „Notion API") |
 | treść strony (blocks) | — | właściwy tekst → HTML |
 
-Lead na liście = automatycznie z pierwszego akapitu treści.
+Lead na liście = automatycznie z pierwszego akapitu treści (dotyczy artykułów i projektów).
 
 ## Rozwój lokalny
 
@@ -73,13 +76,11 @@ src/
                notion-blocks (render treści), youtube
   i18n/        dict.ts (etykiety UI PL/EN — tylko chrome, nie treść)
   layouts/     BaseLayout.astro (meta, hreflang, canonical, nawigacja)
-  components/  HomeView, EntryView, ArticleCard, Cover, ContentBody
-  pages/       index, [slug], pl/index, pl/[slug], rss.xml, pl/rss.xml
+  components/  HomeView, ProjectsView, EntryView, ArticleCard, ProjectCard, Cover, ContentBody
+  pages/       index, [slug], projects, pl/index, pl/[slug], pl/projekty, rss.xml, pl/rss.xml
   styles/      global.css (zmienne CSS — placeholdery pod design)
 ```
 
 ## Do zrobienia później
 
-- **Design handoff** — warstwa wizualna przyjdzie osobno; obecny CSS to celowy szkielet.
 - Obrazki obce renderowane wprost w `<img>` (bez `astro:assets`) — jak w projekcie siostrzanym.
-- Kategorie/Tagi są w modelu, ale jeszcze nie wyświetlane.

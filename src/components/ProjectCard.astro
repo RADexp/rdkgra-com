@@ -1,0 +1,136 @@
+---
+import type { Entry, Locale } from '../lib/types';
+import { urlFor } from '../lib/notion';
+import { stageDot, stageLabel, stageSlug } from '../lib/project-stage';
+
+interface Props {
+  entry: Entry;
+  locale: Locale;
+  index: number; // 1-based, do numeru w wierszu
+}
+const { entry, locale, index } = Astro.props;
+const href = urlFor(entry);
+const number = String(index).padStart(2, '0');
+const stack = entry.tags.join(' · ');
+const stage = stageSlug(entry.projectStage);
+---
+
+<a class="row" href={href} data-stage={stage}>
+  <span class="row-num">{number}</span>
+  <span class="row-main">
+    <span class="row-title">{entry.title}</span>
+    {entry.excerpt && <span class="row-desc">{entry.excerpt}</span>}
+  </span>
+  {stack && <span class="row-stack">{stack}</span>}
+  {
+    entry.projectStage && (
+      <span class={`row-status stage-${stage}`}>
+        {stageDot(entry.projectStage)} {stageLabel(entry.projectStage, locale)}
+      </span>
+    )
+  }
+  <span class="row-arrow" aria-hidden="true">→</span>
+</a>
+
+<style>
+  .row {
+    display: grid;
+    grid-template-columns: 44px 1fr 150px 120px 26px;
+    grid-template-areas: 'num main stack status arrow';
+    gap: 22px;
+    align-items: baseline;
+    padding: 26px 8px;
+    border-top: 1px solid var(--color-border);
+    text-decoration: none;
+    color: inherit;
+    transition: background-color 0.18s ease;
+  }
+  .row:hover {
+    background: var(--color-surface);
+  }
+  .row:hover .row-title {
+    color: var(--color-accent);
+  }
+  .row:hover .row-arrow {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .row-num {
+    grid-area: num;
+    font: 400 11.5px var(--font-mono);
+    color: var(--color-accent);
+    letter-spacing: 0.04em;
+  }
+  .row-main {
+    grid-area: main;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+  }
+  .row-title {
+    font: 500 28px/1.15 var(--font-serif);
+    letter-spacing: -0.015em;
+    color: var(--color-text);
+    transition: color 0.18s ease;
+  }
+  .row-desc {
+    font: 400 15px/1.6 var(--font-serif);
+    color: var(--color-muted-2);
+    max-width: 52ch;
+  }
+  .row-stack {
+    grid-area: stack;
+    font: 400 11.5px var(--font-mono);
+    color: var(--color-muted);
+    letter-spacing: 0.02em;
+  }
+  .row-status {
+    grid-area: status;
+    font: 400 11.5px var(--font-mono);
+    letter-spacing: 0.02em;
+    color: var(--color-accent);
+    white-space: nowrap;
+  }
+  .row-status.stage-shipped {
+    color: #3f7a45;
+  }
+  .row-status.stage-paused {
+    color: #9a7b2e;
+  }
+  .row-status.stage-archived,
+  .row-status.stage-unknown {
+    color: var(--color-subtle);
+  }
+  .row-arrow {
+    grid-area: arrow;
+    text-align: right;
+    font: 400 18px var(--font-serif);
+    color: var(--color-accent);
+    opacity: 0;
+    transform: translateX(-6px);
+    transition:
+      opacity 0.18s ease,
+      transform 0.18s ease;
+  }
+
+  @media (max-width: 767px) {
+    .row {
+      grid-template-columns: 1fr auto;
+      grid-template-areas:
+        'num status'
+        'main main'
+        'stack stack';
+      row-gap: 8px;
+      column-gap: 12px;
+      padding: 20px 4px;
+    }
+    .row-title {
+      font-size: 22px;
+    }
+    .row-arrow {
+      display: none;
+    }
+  }
+</style>
