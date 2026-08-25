@@ -5,12 +5,14 @@ export type Locale = 'pl' | 'en';
 export type EntryType = 'article' | 'page' | 'home';
 
 export interface ContentBlock {
-  type: 'h1' | 'h2' | 'h3' | 'p' | 'ul' | 'quote' | 'code' | 'youtube';
+  type: 'h1' | 'h2' | 'h3' | 'p' | 'ul' | 'quote' | 'code' | 'youtube' | 'image';
   html?: string;
   items?: string[];
   youtubeId?: string;
   code?: string; // surowy tekst bloku code (bez HTML)
   lang?: string; // język bloku code (np. 'javascript')
+  src?: string; // lokalna ścieżka obrazka pobranego przy buildzie (patrz notion-blocks.ts)
+  alt?: string; // podpis obrazka z Notion (caption)
 }
 
 export interface Entry {

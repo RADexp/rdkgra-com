@@ -4,9 +4,60 @@ import type {
   PartialBlockObjectResponse,
   RichTextItemResponse,
 } from '@notionhq/client/build/src/api-endpoints';
+import { mkdir, writeFile, access } from 'node:fs/promises';
+import path from 'node:path';
 import { sanitizeUrl } from './sanitize-url';
 import { extractYoutubeId, isYoutubeOnly } from './youtube';
 import type { ContentBlock } from './types';
+
+// Obrazki wklejone/wgrane bezpośrednio do Notion są hostowane na tymczasowych,
+// wygasających linkach (S3, ważne ~1h) — nie nadają się do statycznego HTML.
+// Dlatego pobieramy je raz przy buildzie i zapisujemy do public/, żeby na
+// zbudowanej stronie link był trwały. Nazwa pliku = id bloku Notion (stabilne
+// dopóki blok istnieje), więc kolejne buildy nie pobierają go ponownie.
+const IMAGE_DIR = path.join(process.cwd(), 'public', 'notion-images');
+const EXT_BY_CONTENT_TYPE: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/gif': 'gif',
+  'image/webp': 'webp',
+  'image/svg+xml': 'svg',
+};
+
+function extFromUrl(url: string): string | null {
+  const match = /\.([a-z0-9]{2,4})(?:\?|$)/i.exec(new URL(url).pathname);
+  return match ? match[1].toLowerCase() : null;
+}
+
+async function fileExists(p: string): Promise<boolean> {
+  try {
+    await access(p);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function saveNotionImage(url: string, blockId: string): Promise<string | null> {
+  const guessedExt = extFromUrl(url) ?? 'jpg';
+  const existing = await fileExists(path.join(IMAGE_DIR, `${blockId}.${guessedExt}`));
+  if (existing) return `/notion-images/${blockId}.${guessedExt}`;
+
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(20000) });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const contentType = res.headers.get('content-type')?.split(';')[0].trim() ?? '';
+    const ext = EXT_BY_CONTENT_TYPE[contentType] ?? extFromUrl(url) ?? 'jpg';
+    const filePath = path.join(IMAGE_DIR, `${blockId}.${ext}`);
+    const buffer = Buffer.from(await res.arrayBuffer());
+    await mkdir(IMAGE_DIR, { recursive: true });
+    await writeFile(filePath, buffer);
+    return `/notion-images/${blockId}.${ext}`;
+  } catch (err) {
+    console.warn(`[notion] Nie udało się pobrać obrazka (blok ${blockId}): ${err}`);
+    return null;
+  }
+}
 
 function escapeHtml(s: string): string {
   return s
@@ -55,8 +106,9 @@ async function fetchAllBlocks(client: Client, blockId: string): Promise<BlockObj
 
 // Renderer treści strony Notion → uproszczony model bloków (v1).
 // Obsługiwane: nagłówki h1–h3, listy (bulleted), akapity (bold/italic/code/link),
-// cytaty (quote → pull-quote), bloki kodu (code), YouTube (paragraf-tylko-link,
-// blok video, blok embed). Reszta pomijana w v1.
+// cytaty (quote → pull-quote), bloki kodu (code), obrazki (image, pobierane
+// i self-hostowane przy buildzie), YouTube (paragraf-tylko-link, blok video,
+// blok embed). Reszta pomijana w v1.
 export async function getContentBlocks(client: Client, pageId: string): Promise<ContentBlock[]> {
   const blocks = await fetchAllBlocks(client, pageId);
   const out: ContentBlock[] = [];
@@ -110,6 +162,14 @@ export async function getContentBlocks(client: Client, pageId: string): Promise<
           lang: block.code.language,
         });
         break;
+      case 'image': {
+        flushList();
+        const img = block.image;
+        const url = img.type === 'external' ? img.external.url : img.file.url;
+        const src = await saveNotionImage(url, block.id);
+        if (src) out.push({ type: 'image', src, alt: richTextPlain(img.caption) || undefined });
+        break;
+      }
       case 'video': {
         flushList();
         const url = block.video.type === 'external' ? block.video.external.url : null;
@@ -124,7 +184,7 @@ export async function getContentBlocks(client: Client, pageId: string): Promise<
         break;
       }
       default:
-        // inne typy (image, quote, callout, itd.) pomijane w v1
+        // inne typy (callout, table, itd.) pomijane w v1
         flushList();
         break;
     }

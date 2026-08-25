@@ -7,3 +7,6 @@ dist/
 !.env.example
 
 .claude/
+
+# Obrazki z Notion pobierane przy buildzie (self-hosted kopie, patrz notion-blocks.ts)
+public/notion-images/
