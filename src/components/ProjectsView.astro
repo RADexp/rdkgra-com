@@ -41,7 +41,8 @@ const stageCounts = PROJECT_STAGES.reduce<Record<string, number>>((acc, stage) =
 >
   <section class="hero">
     <div class="hero-orb" aria-hidden="true"></div>
-    <div class="hero-inner">
+    <div class="hero-container">
+      <div class="hero-inner">
       <p class="eyebrow">{t('projectsEyebrow', locale)}</p>
       {
         locale === 'pl' ? (
@@ -55,6 +56,7 @@ const stageCounts = PROJECT_STAGES.reduce<Record<string, number>>((acc, stage) =
         )
       }
       <p class="hero-lead">{t('projectsLead', locale)}</p>
+      </div>
     </div>
   </section>
 
@@ -153,10 +155,13 @@ const stageCounts = PROJECT_STAGES.reduce<Record<string, number>>((acc, stage) =
     mask-image: radial-gradient(circle, #000 42%, transparent 62%);
     pointer-events: none;
   }
+  .hero-container {
+    max-width: var(--page-max);
+    margin: 0 auto;
+  }
   .hero-inner {
     position: relative;
     max-width: 720px;
-    margin: 0 auto;
   }
   .eyebrow {
     margin: 0 0 18px;
