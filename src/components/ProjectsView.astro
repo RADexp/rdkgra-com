@@ -131,7 +131,7 @@ const stageCounts = PROJECT_STAGES.reduce<Record<string, number>>((acc, stage) =
     overflow: hidden;
     width: 100vw;
     margin-left: calc(50% - 50vw);
-    padding: clamp(36px, 6vw, 60px) var(--page-pad) clamp(28px, 5vw, 44px);
+    padding: clamp(36px, 6vw, 60px) 0 clamp(28px, 5vw, 44px);
   }
   .hero-orb {
     position: absolute;
@@ -158,6 +158,7 @@ const stageCounts = PROJECT_STAGES.reduce<Record<string, number>>((acc, stage) =
   .hero-container {
     max-width: var(--page-max);
     margin: 0 auto;
+    padding: 0 var(--page-pad);
   }
   .hero-inner {
     position: relative;
