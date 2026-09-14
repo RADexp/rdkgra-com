@@ -7,9 +7,9 @@ export const PROJECT_STAGES = ['Shipped', 'In progress', 'Paused', 'Archived'] a
 export type ProjectStage = (typeof PROJECT_STAGES)[number];
 
 const LABELS: Record<ProjectStage, { en: string; pl: string }> = {
-  Shipped: { en: 'Shipped', pl: 'Wydany' },
+  Shipped: { en: 'Shipped', pl: 'Gotowy' },
   'In progress': { en: 'In progress', pl: 'W trakcie' },
-  Paused: { en: 'Paused', pl: 'Wstrzymany' },
+  Paused: { en: 'Paused', pl: 'Zapauzowany' },
   Archived: { en: 'Archived', pl: 'Zarchiwizowany' },
 };
 
